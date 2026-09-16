@@ -1,1 +1,1 @@
-{"name":"ngd-midia","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","check":"node --check server.mjs && node --check public/app.js","test":"node --test tests/server.test.mjs"},"dependencies":{"express":"^5.1.0","multer":"^2.0.2"}}
+{"name":"ngd-midia","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","check":"node --check server.mjs && node --check public/app.js","test":"node --test tests/*.test.mjs"},"dependencies":{"express":"^5.1.0","multer":"^2.0.2"}}
