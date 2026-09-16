@@ -2,6 +2,8 @@ param([switch]$OpenDashboard)
 $ErrorActionPreference = 'Stop'
 $ngdRoot = Split-Path -Parent $PSScriptRoot
 $ngdNode = (Get-Command node.exe -ErrorAction Stop).Source
+$ngdTools = Join-Path $ngdRoot '.runtime/tools'
+if (-not (Test-Path (Join-Path $ngdTools 'ffmpeg.exe')) -or -not (Test-Path (Join-Path $ngdTools 'yt-dlp.exe'))) { & (Join-Path $PSScriptRoot 'install-tools.ps1') }
 $ngdServices = @(
     @{ Url = 'http://localhost:3210/api/state'; Script = 'server.mjs'; Name = 'dashboard' },
     @{ Url = 'http://localhost:5678/healthz'; Script = 'automation/n8n.mjs'; Name = 'n8n' }

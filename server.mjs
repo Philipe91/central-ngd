@@ -73,7 +73,7 @@ app.disable('x-powered-by');
 app.use((req, res, next) => {
   if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host || '')) return res.status(403).json({ error: 'Acesso apenas neste computador.' });
   if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return res.status(403).json({ error: 'Origem não autorizada.' });
-  if (req.headers['sec-fetch-site'] === 'cross-site') return res.status(403).json({ error: 'Origem não autorizada.' });
+  if (req.headers['sec-fetch-site'] === 'cross-site' && req.headers['sec-fetch-mode'] !== 'navigate') return res.status(403).json({ error: 'Origem não autorizada.' });
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
