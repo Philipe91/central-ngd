@@ -3,9 +3,16 @@
     "id": "ngdLocalHealth01",
     "name": "NGD · Verificar conexão do painel",
     "active": false,
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "America/Sao_Paulo",
+      "saveDataSuccessExecution": "all",
+      "saveDataErrorExecution": "all",
+      "saveManualExecutions": true
+    },
     "nodes": [
       {
-        "id": "health-webhook",
+        "id": "verifica-o-autenticada",
         "name": "Verificação autenticada",
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
@@ -29,19 +36,19 @@
         }
       },
       {
-        "id": "health-output",
+        "id": "confirmar-conex-o",
         "name": "Confirmar conexão",
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.4,
         "position": [
-          280,
+          260,
           0
         ],
         "parameters": {
           "assignments": {
             "assignments": [
               {
-                "id": "ok",
+                "id": "service",
                 "name": "service",
                 "value": "ngd-n8n",
                 "type": "string"
@@ -49,11 +56,12 @@
               {
                 "id": "mode",
                 "name": "mode",
-                "value": "preparation",
+                "value": "publishing",
                 "type": "string"
               }
             ]
           },
+          "includeOtherFields": false,
           "options": {}
         }
       }
@@ -70,18 +78,19 @@
           ]
         ]
       }
-    },
+    }
+  },
+  {
+    "id": "ngdPublishQueue01",
+    "name": "NGD · Publicar fila",
+    "active": false,
     "settings": {
       "executionOrder": "v1",
       "timezone": "America/Sao_Paulo",
       "saveDataSuccessExecution": "all",
-      "saveDataErrorExecution": "all"
-    }
-  },
-  {
-    "id": "ngdPrepareQueue01",
-    "name": "NGD · Preparar fila local (sem publicar)",
-    "active": false,
+      "saveDataErrorExecution": "all",
+      "saveManualExecutions": true
+    },
     "nodes": [
       {
         "id": "schedule",
@@ -104,33 +113,21 @@
         }
       },
       {
-        "id": "manual",
-        "name": "Preparar agora",
-        "type": "n8n-nodes-base.manualTrigger",
-        "typeVersion": 1,
+        "id": "publicar-agora-painel-",
+        "name": "Publicar agora (painel)",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
         "position": [
           0,
-          200
+          180
         ],
-        "parameters": {}
-      },
-      {
-        "id": "prepare",
-        "name": "Conferir planejamento",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          280,
-          80
-        ],
+        "webhookId": "ngd-publish-now",
         "parameters": {
-          "method": "POST",
-          "url": "http://127.0.0.1:3210/api/automation/prepare",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "options": {
-            "timeout": 10000
-          }
+          "path": "ngd-publish-now",
+          "httpMethod": "POST",
+          "authentication": "headerAuth",
+          "responseMode": "onReceived",
+          "options": {}
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -140,18 +137,1429 @@
         }
       },
       {
-        "id": "note",
-        "name": "Antes de publicar",
+        "id": "manual",
+        "name": "Executar manualmente",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          360
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "buscar-trabalhos-vencidos",
+        "name": "Buscar trabalhos vencidos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          260,
+          180
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/claim",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ limit: 10 }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "dividir-trabalhos",
+        "name": "Dividir trabalhos",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          520,
+          180
+        ],
+        "parameters": {
+          "fieldToSplitOut": "jobs",
+          "options": {}
+        }
+      },
+      {
+        "id": "por-rede",
+        "name": "Por rede",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          780,
+          180
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "youtube",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "youtube",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "youtube"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "facebook",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "facebook",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "facebook"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "instagram",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "instagram",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "instagram"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "tiktok",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "tiktok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "tiktok"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "como-funciona",
+        "name": "Como funciona",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          540,
-          -40
+          -80,
+          -420
         ],
         "parameters": {
-          "content": "## Preparação local\nEste fluxo confere o planejamento e registra as pendências por rede.\n\n**Não publica e não acessa redes sociais.**\n\nPróxima etapa: cadastrar credenciais, configurar o publicador de cada plataforma e testar com um vídeo autorizado.",
-          "height": 300,
-          "width": 380
+          "content": "## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha \"NGD · YouTube\", \"NGD · Meta\" e \"NGD · TikTok\". Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.",
+          "width": 520,
+          "height": 260
+        }
+      },
+      {
+        "id": "ler-v-deo-youtube-",
+        "name": "Ler vídeo (YouTube)",
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1,
+        "position": [
+          1040,
+          0
+        ],
+        "parameters": {
+          "fileSelector": "={{ $json.filePath }}",
+          "options": {
+            "dataPropertyName": "data"
+          }
+        }
+      },
+      {
+        "id": "youtube-upload",
+        "name": "Enviar para o YouTube",
+        "type": "n8n-nodes-base.youTube",
+        "typeVersion": 1,
+        "position": [
+          1300,
+          0
+        ],
+        "onError": "continueRegularOutput",
+        "parameters": {
+          "resource": "video",
+          "operation": "upload",
+          "title": "={{ $('Dividir trabalhos').item.json.title }}",
+          "regionCode": "BR",
+          "categoryId": "22",
+          "binaryProperty": "data",
+          "options": {
+            "description": "={{ $('Dividir trabalhos').item.json.text }}",
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": false,
+            "notifySubscribers": true,
+            "tags": "={{ ($('Dividir trabalhos').item.json.hashtags || '').split(/\\s+/).filter(Boolean).map(t => t.replace('#','')).join(',') }}"
+          }
+        },
+        "credentials": {
+          "youTubeOAuth2Api": {
+            "id": "ngdYouTube01",
+            "name": "NGD · YouTube (Google OAuth2)"
+          }
+        }
+      },
+      {
+        "id": "youtube-deu-certo-",
+        "name": "YouTube deu certo?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1560,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.id && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-youtube",
+        "name": "Registrar sucesso YouTube",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          -90
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'published', externalId: $json.id, url: 'https://youtube.com/shorts/' + $json.id }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-youtube",
+        "name": "Registrar falha YouTube",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          90
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "fb-iniciar-envio",
+        "name": "FB: iniciar envio",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          360
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.integrations.pageId }}/video_reels",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ upload_phase: \"start\" }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "fb-iniciou-",
+        "name": "FB iniciou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1300,
+          360
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.video_id && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "ler-v-deo-facebook-",
+        "name": "Ler vídeo (Facebook)",
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1,
+        "position": [
+          1560,
+          270
+        ],
+        "parameters": {
+          "fileSelector": "={{ $('Dividir trabalhos').item.json.filePath }}",
+          "options": {
+            "dataPropertyName": "data"
+          }
+        }
+      },
+      {
+        "id": "fb-enviar-arquivo",
+        "name": "FB: enviar arquivo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          270
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://rupload.facebook.com/video-reels/{{ $('FB: iniciar envio').item.json.video_id }}",
+          "options": {
+            "timeout": 900000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "contentType": "binaryData",
+          "inputDataFieldName": "data",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "offset",
+                "value": "0"
+              },
+              {
+                "name": "file_size",
+                "value": "={{ $('Dividir trabalhos').item.json.bytes }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "fb-concluir-e-publicar",
+        "name": "FB: concluir e publicar",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2080,
+          270
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Dividir trabalhos').item.json.integrations.pageId }}/video_reels",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "upload_phase",
+                "value": "finish"
+              },
+              {
+                "name": "video_id",
+                "value": "={{ $('FB: iniciar envio').item.json.video_id }}"
+              },
+              {
+                "name": "video_state",
+                "value": "PUBLISHED"
+              },
+              {
+                "name": "description",
+                "value": "={{ $('Dividir trabalhos').item.json.text }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "fb-publicou-",
+        "name": "FB publicou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2340,
+          270
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.success === true && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-facebook",
+        "name": "Registrar sucesso Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2600,
+          180
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'published', externalId: $('FB: iniciar envio').item.json.video_id, url: 'https://www.facebook.com/reel/' + $('FB: iniciar envio').item.json.video_id }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-facebook",
+        "name": "Registrar falha Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2600,
+          450
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "ig-criar-cont-iner",
+        "name": "IG: criar contêiner",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          720
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.integrations.igUserId }}/media",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ media_type: \"REELS\", video_url: $json.publicUrl, caption: $json.text, share_to_feed: true }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "ig-criou-",
+        "name": "IG criou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1300,
+          720
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.id && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "ig-aguardar-processamento",
+        "name": "IG: aguardar processamento",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1560,
+          630
+        ],
+        "webhookId": "ig-aguardar-processamento",
+        "parameters": {
+          "amount": 20,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "ig-consultar-estado",
+        "name": "IG: consultar estado",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          630
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('IG: criar contêiner').item.json.id }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "status_code,status"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "ig-estado",
+        "name": "IG: estado",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          2080,
+          630
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "ok",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "ok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "ok"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "wait",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "wait",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "wait"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "fail",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "fail",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "fail"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "ig-publicar",
+        "name": "IG: publicar",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2340,
+          540
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('Dividir trabalhos').item.json.integrations.igUserId }}/media_publish",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "creation_id",
+                "value": "={{ $('IG: criar contêiner').item.json.id }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "ig-obter-link",
+        "name": "IG: obter link",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2600,
+          540
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.id }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "permalink"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "ig-publicou-",
+        "name": "IG publicou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2860,
+          540
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.permalink && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-instagram",
+        "name": "Registrar sucesso Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3120,
+          450
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'published', externalId: $json.id, url: $json.permalink }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-instagram",
+        "name": "Registrar falha Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3120,
+          810
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "tt-iniciar-envio",
+        "name": "TT: iniciar envio",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          1080
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://open.tiktokapis.com/v2/post/publish/video/init/",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ post_info: { title: ($json.text || $json.title).slice(0, 2200), privacy_level: $json.integrations.privacy || \"SELF_ONLY\", disable_duet: false, disable_comment: false, disable_stitch: false, video_cover_timestamp_ms: 1000 }, source_info: { source: \"FILE_UPLOAD\", video_size: $json.bytes, chunk_size: $json.bytes, total_chunk_count: 1 } }) }}",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdTikTok01",
+            "name": "NGD · TikTok (access token)"
+          }
+        }
+      },
+      {
+        "id": "tt-iniciou-",
+        "name": "TT iniciou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1300,
+          1080
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.data?.upload_url && $json.error?.code === \"ok\" }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "ler-v-deo-tiktok-",
+        "name": "Ler vídeo (TikTok)",
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1,
+        "position": [
+          1560,
+          990
+        ],
+        "parameters": {
+          "fileSelector": "={{ $('Dividir trabalhos').item.json.filePath }}",
+          "options": {
+            "dataPropertyName": "data"
+          }
+        }
+      },
+      {
+        "id": "tt-enviar-arquivo",
+        "name": "TT: enviar arquivo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          990
+        ],
+        "parameters": {
+          "method": "PUT",
+          "url": "={{ $('TT: iniciar envio').item.json.data.upload_url }}",
+          "options": {
+            "timeout": 900000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "text",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "none",
+          "sendBody": true,
+          "contentType": "binaryData",
+          "inputDataFieldName": "data",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "video/mp4"
+              },
+              {
+                "name": "Content-Range",
+                "value": "=bytes 0-{{ $('Dividir trabalhos').item.json.bytes - 1 }}/{{ $('Dividir trabalhos').item.json.bytes }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "tt-aguardar-processamento",
+        "name": "TT: aguardar processamento",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2080,
+          990
+        ],
+        "webhookId": "tt-aguardar-processamento",
+        "parameters": {
+          "amount": 15,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "tt-consultar-estado",
+        "name": "TT: consultar estado",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2340,
+          990
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://open.tiktokapis.com/v2/post/publish/status/fetch/",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ publish_id: $('TT: iniciar envio').item.json.data.publish_id }) }}",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdTikTok01",
+            "name": "NGD · TikTok (access token)"
+          }
+        }
+      },
+      {
+        "id": "tt-estado",
+        "name": "TT: estado",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          2600,
+          990
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "ok",
+                      "leftValue": "={{ $json.data?.status === \"PUBLISH_COMPLETE\" ? \"ok\" : ([\"PROCESSING_UPLOAD\",\"PROCESSING_DOWNLOAD\",\"SEND_TO_USER_INBOX\"].includes($json.data?.status) && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "ok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "ok"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "wait",
+                      "leftValue": "={{ $json.data?.status === \"PUBLISH_COMPLETE\" ? \"ok\" : ([\"PROCESSING_UPLOAD\",\"PROCESSING_DOWNLOAD\",\"SEND_TO_USER_INBOX\"].includes($json.data?.status) && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "wait",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "wait"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "fail",
+                      "leftValue": "={{ $json.data?.status === \"PUBLISH_COMPLETE\" ? \"ok\" : ([\"PROCESSING_UPLOAD\",\"PROCESSING_DOWNLOAD\",\"SEND_TO_USER_INBOX\"].includes($json.data?.status) && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "fail",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "fail"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-tiktok",
+        "name": "Registrar sucesso TikTok",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2860,
+          900
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'published', externalId: String($json.data?.publicaly_available_post_id?.[0] ?? $('TT: iniciar envio').item.json.data.publish_id), url: $json.data?.publicaly_available_post_id?.[0] ? 'https://www.tiktok.com/video/' + $json.data.publicaly_available_post_id[0] : '' }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-tiktok",
+        "name": "Registrar falha TikTok",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2860,
+          1170
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
         }
       }
     ],
@@ -160,30 +1568,1771 @@
         "main": [
           [
             {
-              "node": "Conferir planejamento",
+              "node": "Buscar trabalhos vencidos",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Preparar agora": {
+      "Publicar agora (painel)": {
         "main": [
           [
             {
-              "node": "Conferir planejamento",
+              "node": "Buscar trabalhos vencidos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Executar manualmente": {
+        "main": [
+          [
+            {
+              "node": "Buscar trabalhos vencidos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar trabalhos vencidos": {
+        "main": [
+          [
+            {
+              "node": "Dividir trabalhos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dividir trabalhos": {
+        "main": [
+          [
+            {
+              "node": "Por rede",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Por rede": {
+        "main": [
+          [
+            {
+              "node": "Ler vídeo (YouTube)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "FB: iniciar envio",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IG: criar contêiner",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "TT: iniciar envio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ler vídeo (YouTube)": {
+        "main": [
+          [
+            {
+              "node": "Enviar para o YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enviar para o YouTube": {
+        "main": [
+          [
+            {
+              "node": "YouTube deu certo?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "YouTube deu certo?": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FB: iniciar envio": {
+        "main": [
+          [
+            {
+              "node": "FB iniciou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FB iniciou?": {
+        "main": [
+          [
+            {
+              "node": "Ler vídeo (Facebook)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ler vídeo (Facebook)": {
+        "main": [
+          [
+            {
+              "node": "FB: enviar arquivo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FB: enviar arquivo": {
+        "main": [
+          [
+            {
+              "node": "FB: concluir e publicar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FB: concluir e publicar": {
+        "main": [
+          [
+            {
+              "node": "FB publicou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FB publicou?": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: criar contêiner": {
+        "main": [
+          [
+            {
+              "node": "IG criou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG criou?": {
+        "main": [
+          [
+            {
+              "node": "IG: aguardar processamento",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: aguardar processamento": {
+        "main": [
+          [
+            {
+              "node": "IG: consultar estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: consultar estado": {
+        "main": [
+          [
+            {
+              "node": "IG: estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: estado": {
+        "main": [
+          [
+            {
+              "node": "IG: publicar",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IG: aguardar processamento",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: publicar": {
+        "main": [
+          [
+            {
+              "node": "IG: obter link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG: obter link": {
+        "main": [
+          [
+            {
+              "node": "IG publicou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IG publicou?": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT: iniciar envio": {
+        "main": [
+          [
+            {
+              "node": "TT iniciou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT iniciou?": {
+        "main": [
+          [
+            {
+              "node": "Ler vídeo (TikTok)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ler vídeo (TikTok)": {
+        "main": [
+          [
+            {
+              "node": "TT: enviar arquivo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT: enviar arquivo": {
+        "main": [
+          [
+            {
+              "node": "TT: aguardar processamento",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT: aguardar processamento": {
+        "main": [
+          [
+            {
+              "node": "TT: consultar estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT: consultar estado": {
+        "main": [
+          [
+            {
+              "node": "TT: estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TT: estado": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "TT: aguardar processamento",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha TikTok",
               "type": "main",
               "index": 0
             }
           ]
         ]
       }
-    },
+    }
+  },
+  {
+    "id": "ngdTestConnection01",
+    "name": "NGD · Testar conexão",
+    "active": false,
     "settings": {
       "executionOrder": "v1",
       "timezone": "America/Sao_Paulo",
       "saveDataSuccessExecution": "all",
-      "saveDataErrorExecution": "all"
+      "saveDataErrorExecution": "all",
+      "saveManualExecutions": true
+    },
+    "nodes": [
+      {
+        "id": "pedido-de-teste",
+        "name": "Pedido de teste",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "ngd-test-connection",
+        "parameters": {
+          "path": "ngd-test-connection",
+          "httpMethod": "POST",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "qual-rede-",
+        "name": "Qual rede?",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          260,
+          0
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "youtube",
+                      "leftValue": "={{ $json.body.network }}",
+                      "rightValue": "youtube",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "youtube"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "facebook",
+                      "leftValue": "={{ $json.body.network }}",
+                      "rightValue": "facebook",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "facebook"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "instagram",
+                      "leftValue": "={{ $json.body.network }}",
+                      "rightValue": "instagram",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "instagram"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "tiktok",
+                      "leftValue": "={{ $json.body.network }}",
+                      "rightValue": "tiktok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "tiktok"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "testar-youtube",
+        "name": "Testar YouTube",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          -270
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/youtube/v3/channels",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "youTubeOAuth2Api",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "part",
+                "value": "snippet"
+              },
+              {
+                "name": "mine",
+                "value": "true"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "youTubeOAuth2Api": {
+            "id": "ngdYouTube01",
+            "name": "NGD · YouTube (Google OAuth2)"
+          }
+        }
+      },
+      {
+        "id": "resposta-youtube",
+        "name": "Resposta YouTube",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          780,
+          -270
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "connected",
+                "name": "connected",
+                "value": "={{ !$json.error && !!($json.items?.[0]?.snippet?.title) }}",
+                "type": "boolean"
+              },
+              {
+                "id": "account",
+                "name": "account",
+                "value": "={{ String($json.items?.[0]?.snippet?.title ?? \"\") }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": false,
+          "options": {}
+        }
+      },
+      {
+        "id": "testar-facebook",
+        "name": "Testar Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          -90
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://graph.facebook.com/v21.0/me",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,name"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "resposta-facebook",
+        "name": "Resposta Facebook",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          780,
+          -90
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "connected",
+                "name": "connected",
+                "value": "={{ !$json.error && !!($json.name) }}",
+                "type": "boolean"
+              },
+              {
+                "id": "account",
+                "name": "account",
+                "value": "={{ String($json.name ?? \"\") }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": false,
+          "options": {}
+        }
+      },
+      {
+        "id": "testar-instagram",
+        "name": "Testar Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          90
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.body.integrations?.igUserId || 'me' }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "username"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "resposta-instagram",
+        "name": "Resposta Instagram",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          780,
+          90
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "connected",
+                "name": "connected",
+                "value": "={{ !$json.error && !!($json.username) }}",
+                "type": "boolean"
+              },
+              {
+                "id": "account",
+                "name": "account",
+                "value": "={{ String($json.username ?? \"\") }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": false,
+          "options": {}
+        }
+      },
+      {
+        "id": "testar-tiktok",
+        "name": "Testar TikTok",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          270
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://open.tiktokapis.com/v2/user/info/",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "display_name,username"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdTikTok01",
+            "name": "NGD · TikTok (access token)"
+          }
+        }
+      },
+      {
+        "id": "resposta-tiktok",
+        "name": "Resposta TikTok",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          780,
+          270
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "connected",
+                "name": "connected",
+                "value": "={{ !$json.error && !!(($json.data?.user?.username || $json.data?.user?.display_name)) }}",
+                "type": "boolean"
+              },
+              {
+                "id": "account",
+                "name": "account",
+                "value": "={{ String(($json.data?.user?.username || $json.data?.user?.display_name) ?? \"\") }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": false,
+          "options": {}
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Responder ao painel",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1040,
+          0
+        ],
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        }
+      },
+      {
+        "id": "sobre-este-fluxo",
+        "name": "Sobre este fluxo",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -80,
+          -400
+        ],
+        "parameters": {
+          "content": "## NGD · Testar conexão\nO painel chama este fluxo pelo botão \"Testar conexão\" de cada rede. Ele faz uma consulta simples (\"quem sou eu\") com a credencial correspondente e responde se funcionou.\n\nSe a credencial estiver vazia ou expirada, a resposta traz o erro da plataforma.",
+          "width": 520,
+          "height": 200
+        }
+      }
+    ],
+    "connections": {
+      "Pedido de teste": {
+        "main": [
+          [
+            {
+              "node": "Qual rede?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Qual rede?": {
+        "main": [
+          [
+            {
+              "node": "Testar YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Testar Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Testar Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Testar TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Testar YouTube": {
+        "main": [
+          [
+            {
+              "node": "Resposta YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Testar Facebook": {
+        "main": [
+          [
+            {
+              "node": "Resposta Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Testar Instagram": {
+        "main": [
+          [
+            {
+              "node": "Resposta Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Testar TikTok": {
+        "main": [
+          [
+            {
+              "node": "Resposta TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resposta YouTube": {
+        "main": [
+          [
+            {
+              "node": "Responder ao painel",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resposta Facebook": {
+        "main": [
+          [
+            {
+              "node": "Responder ao painel",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resposta Instagram": {
+        "main": [
+          [
+            {
+              "node": "Responder ao painel",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resposta TikTok": {
+        "main": [
+          [
+            {
+              "node": "Responder ao painel",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  {
+    "id": "ngdCollectMetrics01",
+    "name": "NGD · Coletar resultados",
+    "active": false,
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "America/Sao_Paulo",
+      "saveDataSuccessExecution": "all",
+      "saveDataErrorExecution": "all",
+      "saveManualExecutions": true
+    },
+    "nodes": [
+      {
+        "id": "daily",
+        "name": "Todo dia às 7h",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "days",
+                "daysInterval": 1,
+                "triggerAtHour": 7
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "coletar-agora-painel-",
+        "name": "Coletar agora (painel)",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          180
+        ],
+        "webhookId": "ngd-collect-metrics",
+        "parameters": {
+          "path": "ngd-collect-metrics",
+          "httpMethod": "POST",
+          "authentication": "headerAuth",
+          "responseMode": "onReceived",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "manual-collect",
+        "name": "Executar manualmente",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          360
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "buscar-publica-es",
+        "name": "Buscar publicações",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          260,
+          180
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "http://127.0.0.1:3210/api/automation/published",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "dividir-publica-es",
+        "name": "Dividir publicações",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          520,
+          180
+        ],
+        "parameters": {
+          "fieldToSplitOut": "items",
+          "options": {}
+        }
+      },
+      {
+        "id": "rede-da-publica-o",
+        "name": "Rede da publicação",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          780,
+          180
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "youtube",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "youtube",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "youtube"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "facebook",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "facebook",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "facebook"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "instagram",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "instagram",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "instagram"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "tiktok",
+                      "leftValue": "={{ $json.network }}",
+                      "rightValue": "tiktok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "tiktok"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "m-tricas-youtube",
+        "name": "Métricas YouTube",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          -90
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/youtube/v3/videos",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "youTubeOAuth2Api",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "part",
+                "value": "statistics"
+              },
+              {
+                "name": "id",
+                "value": "={{ $json.externalId }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "youTubeOAuth2Api": {
+            "id": "ngdYouTube01",
+            "name": "NGD · YouTube (Google OAuth2)"
+          }
+        }
+      },
+      {
+        "id": "gravar-youtube",
+        "name": "Gravar YouTube",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          -90
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/metrics",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ items: [{ contentId: $('Dividir publicações').item.json.contentId, network: $('Dividir publicações').item.json.network, views: $json.items?.[0]?.statistics?.viewCount, likes: $json.items?.[0]?.statistics?.likeCount, comments: $json.items?.[0]?.statistics?.commentCount, shares: null }] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "m-tricas-facebook",
+        "name": "Métricas Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          90
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.externalId }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "views,likes.summary(true),comments.summary(true)"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "gravar-facebook",
+        "name": "Gravar Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          90
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/metrics",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ items: [{ contentId: $('Dividir publicações').item.json.contentId, network: $('Dividir publicações').item.json.network, views: $json.views, likes: $json.likes?.summary?.total_count, comments: $json.comments?.summary?.total_count, shares: null }] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "m-tricas-instagram",
+        "name": "Métricas Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          270
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.externalId }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "like_count,comments_count,insights.metric(views,shares)"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "gravar-instagram",
+        "name": "Gravar Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          270
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/metrics",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ items: [{ contentId: $('Dividir publicações').item.json.contentId, network: $('Dividir publicações').item.json.network, views: $json.insights?.data?.find(m => m.name === \"views\")?.values?.[0]?.value, likes: $json.like_count, comments: $json.comments_count, shares: $json.insights?.data?.find(m => m.name === \"shares\")?.values?.[0]?.value }] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "m-tricas-tiktok",
+        "name": "Métricas TikTok",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          450
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://open.tiktokapis.com/v2/video/query/",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ filters: { video_ids: [$json.externalId] } }) }}",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              }
+            ]
+          },
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "id,view_count,like_count,comment_count,share_count"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdTikTok01",
+            "name": "NGD · TikTok (access token)"
+          }
+        }
+      },
+      {
+        "id": "gravar-tiktok",
+        "name": "Gravar TikTok",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          450
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/metrics",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ items: [{ contentId: $('Dividir publicações').item.json.contentId, network: $('Dividir publicações').item.json.network, views: $json.data?.videos?.[0]?.view_count, likes: $json.data?.videos?.[0]?.like_count, comments: $json.data?.videos?.[0]?.comment_count, shares: $json.data?.videos?.[0]?.share_count }] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "sobre-a-coleta",
+        "name": "Sobre a coleta",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -80,
+          -400
+        ],
+        "parameters": {
+          "content": "## NGD · Coletar resultados\nUma vez por dia (ou pelo botão em Resultados) busca visualizações, curtidas, comentários e compartilhamentos de cada publicação feita pela automação e grava no painel.\n\nCada rede expõe métricas diferentes; campos indisponíveis ficam vazios.",
+          "width": 520,
+          "height": 200
+        }
+      }
+    ],
+    "connections": {
+      "Todo dia às 7h": {
+        "main": [
+          [
+            {
+              "node": "Buscar publicações",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Coletar agora (painel)": {
+        "main": [
+          [
+            {
+              "node": "Buscar publicações",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Executar manualmente": {
+        "main": [
+          [
+            {
+              "node": "Buscar publicações",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar publicações": {
+        "main": [
+          [
+            {
+              "node": "Dividir publicações",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dividir publicações": {
+        "main": [
+          [
+            {
+              "node": "Rede da publicação",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Rede da publicação": {
+        "main": [
+          [
+            {
+              "node": "Métricas YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Métricas Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Métricas Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Métricas TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Métricas YouTube": {
+        "main": [
+          [
+            {
+              "node": "Gravar YouTube",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Métricas Facebook": {
+        "main": [
+          [
+            {
+              "node": "Gravar Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Métricas Instagram": {
+        "main": [
+          [
+            {
+              "node": "Gravar Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Métricas TikTok": {
+        "main": [
+          [
+            {
+              "node": "Gravar TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     }
   }
 ]
