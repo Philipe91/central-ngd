@@ -140,6 +140,7 @@ app.get('/api/automation/published', authenticateBridge, async (req, res) => {
   let items = store.db.contents.flatMap(c => Object.entries(c.posts || {}).filter(([n, p]) => p.status === 'published' && p.externalId && AUTOMATED.includes(n)).map(([n, p]) => ({ contentId: c.id, network: n, externalId: p.externalId, url: p.url, title: c.title })));
   if (items.some(i => i.network === 'tiktok')) {
     let tiktokToken = ''; try { tiktokToken = await tiktokAuth.getFreshToken(); } catch {}
+    if (!tiktokToken) store.change(d => store.log(d, 'TikTok: coleta de métricas pulada, conta não conectada.'));
     items = tiktokToken ? items.map(i => (i.network === 'tiktok' ? { ...i, tiktokToken } : i)) : items.filter(i => i.network !== 'tiktok');
   }
   res.json({ ok: true, items, integrations: store.db.integrations, total: items.length });
