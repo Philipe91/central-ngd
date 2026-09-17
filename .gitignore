@@ -4,3 +4,8 @@ data/
 *.log
 .sites-runtime/
 .runtime/
+
+videos instagram/
+*.mp4
+*.mov
+*.webm
