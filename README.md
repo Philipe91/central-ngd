@@ -49,6 +49,18 @@ Instagram: para publicar, a API da Meta precisa baixar o vídeo por um link púb
 - `docs/superpowers/`: desenho e plano desta etapa.
 - `data/`: `dashboard.json` (+ `.bak`), vídeos, renderizações, banco do n8n, logs, `cookies/instagram.txt` (opcional, para Reels que exigem login).
 
+## Revisão do app do TikTok (para publicar em conta pública)
+
+Enquanto o app "Central NGD" não é aprovado pelo TikTok, a API só publica em **conta privada** (erro `unaudited_client_can_only_post_to_private_accounts`) e só para as contas de teste do Sandbox. Com a conta da loja pública, o TikTok fica em modo manual: no conteúdo, use "Registrar publicação" (baixa o vídeo pronto, copia a legenda, você posta pelo app e cola o link). As outras redes continuam automáticas.
+
+Como pedir a revisão (grátis; costuma levar de 3 a 10 dias úteis, às vezes mais se pedirem ajustes):
+
+1. No portal (developers.tiktok.com → app Central NGD → aba **Production**), preencher: ícone 1024x1024, categoria, descrição, URL de Termos de Serviço e de Política de Privacidade (páginas reais no site da loja), plataforma Web com a URL do site, produtos Login Kit e Content Posting API com Direct Post, escopos `user.info.basic, video.upload, video.publish`.
+2. Antes de gravar a demonstração, o painel precisa cumprir as regras de publicação do TikTok: mostrar o nome da conta que vai postar, deixar escolher a privacidade de cada vídeo entre as opções que a API devolve, os botões de comentário, dueto e stitch, e a marcação de conteúdo comercial. Isso ainda não existe no painel e é uma tarefa pequena a fazer antes da submissão.
+3. Gravar um vídeo (mp4, até 50 MB) mostrando o fluxo inteiro: conectar a conta no painel, escolher o vídeo, preencher os campos acima, publicar e o vídeo aparecendo no TikTok. Anexar em "App review" com a explicação de cada produto e escopo.
+4. Enviar (**Submit for review**) e acompanhar os comentários da revisão no próprio portal. Motivos comuns de recusa: vídeo que não mostra o fluxo completo, links de termos ou privacidade que não abrem, tela sem as opções de privacidade.
+5. Depois da aprovação: no painel, trocar a client key e o client secret pelos de **Production**, clicar em "Reautorizar", mudar a privacidade das publicações para "Público" e voltar a marcar o TikTok nos conteúdos.
+
 ## Backup e limites
 
 Copie a pasta `data` inteira com os serviços parados. Guarde `data/automation-secrets.json` junto com o banco do n8n: sem a chave, as credenciais salvas não abrem. O painel não tem login e não deve ser exposto à rede.
