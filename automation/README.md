@@ -34,9 +34,9 @@ Todos os webhooks exigem o cabeçalho `X-NGD-Automation` com o token da credenci
 | NGD · comunicação local | Header Auth | já preenchida (token gerado em `data/automation-secrets.json`) |
 | NGD · YouTube (Google OAuth2) | YouTube OAuth2 | Client ID + Client Secret do Google Cloud, depois "Sign in with Google" |
 | NGD · Meta (token da Página) | Header Auth | nome `Authorization`, valor `OAuth <token longo da Página>` |
-| NGD · TikTok (access token) | Header Auth | nome `Authorization`, valor `Bearer <access token>` |
+| NGD · TikTok (access token) | Header Auth | **não é mais usada** (fica como reserva). O TikTok é conectado no painel, que guarda chave, segredo e tokens em `data/automation-secrets.json` e manda o token renovado em cada trabalho (`tiktokToken` no claim, no teste e na coleta) |
 
-O passo a passo de cada plataforma está na aba Redes sociais do painel. Nenhum fluxo precisa ser editado: as credenciais já estão ligadas aos nós pelo ID.
+O passo a passo de cada plataforma está na aba Redes sociais do painel. Nenhum fluxo precisa ser editado: as credenciais já estão ligadas aos nós pelo ID. O retorno da autorização do TikTok chega em `/tiktok/callback` no servidor de compartilhamento (3211), pelo túnel temporário; o endereço muda a cada reinício do painel e só é usado na autorização (uma vez por ano).
 
 ## Configuração instalada
 

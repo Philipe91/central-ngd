@@ -23,7 +23,7 @@ npm install
 3. **Publicar**: com data marcada, o n8n publica sozinho quando chega a hora (confere a cada 5 minutos). "Publicar agora" dispara na hora.
 4. **Acompanhar**: cada rede mostra Pendente → Publicando → Publicado (com link) ou Falhou (com o motivo e botão "Tentar de novo"). A aba Automações lista a fila.
 5. **Resultados**: uma vez por dia o n8n busca visualizações, curtidas, comentários e compartilhamentos das publicações automáticas.
-6. **LinkedIn** (e TikTok até a auditoria): "Registrar publicação" baixa o vídeo preparado, copia a legenda e guarda o link depois que você posta pelo app.
+6. **LinkedIn**: "Registrar publicação" baixa o vídeo preparado, copia a legenda e guarda o link depois que você posta pelo app.
 
 ## O que só você pode fazer: conectar as contas
 
@@ -34,7 +34,7 @@ O painel e os fluxos já estão prontos, mas cada rede exige credenciais que só
 | YouTube | Google Cloud: projeto + YouTube Data API v3 + cliente OAuth (redirecionamento `http://localhost:5678/rest/oauth2-credential/callback`) | n8n → Credenciais → **NGD · YouTube (Google OAuth2)** → ID, segredo e "Sign in with Google" |
 | Facebook Reels | developers.facebook.com: app + Graph API Explorer → token longo da Página | n8n → **NGD · Meta (token da Página)** → valor `OAuth SEU_TOKEN`; ID da Página no painel |
 | Instagram Reels | Mesmo token da Meta; ID da conta comercial | ID no painel (Redes sociais → Instagram) |
-| TikTok | developers.tiktok.com: app + Content Posting API (publica privado até a auditoria) | n8n → **NGD · TikTok (access token)** → `Bearer SEU_TOKEN` |
+| TikTok | developers.tiktok.com: app + Login Kit + Content Posting API (Direct Post). Até a revisão, use o **Sandbox** do app com a conta da loja como usuária de teste; a conta precisa estar como **privada** | Painel → Redes sociais → TikTok: client key e secret do sandbox → **Conectar TikTok** (o painel renova o token sozinho por 1 ano) |
 | LinkedIn | Sem API aberta para vídeo | Publicação manual assistida |
 
 Depois de colar, clique em **Testar conexão** na aba Redes sociais. O painel mostra a conta detectada ou o erro devolvido pela plataforma.
