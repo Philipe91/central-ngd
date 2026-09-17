@@ -63,6 +63,26 @@ Depois disso, reinicie o n8n (`Iniciar-NGD.ps1`).
 
 Atualizar os fluxos depois de mudar `create-workflows.mjs`: gere com `--only-bridge` para não sobrescrever as credenciais já preenchidas, importe os fluxos, **repita o `publish:workflow` dos quatro IDs** (a importação volta o fluxo para rascunho) e reinicie o n8n.
 
+## Modo simulado (testar sem contas reais)
+
+`automation/mock-platforms.mjs` é um servidor local (127.0.0.1:3212) que imita as APIs do YouTube, da Meta (Facebook e Instagram) e do TikTok. Com ele a automação inteira roda de ponta a ponta — claim no painel, leitura do vídeo, upload, espera de processamento, link de volta e métricas — sem token nenhum e sem nada sair para a internet.
+
+```powershell
+.utomation\simular.ps1              # liga: gera data/workflows.simulado.json, importa, publica e reinicia tudo com o mock
+.utomation\simular.ps1 -Desligar    # volta aos fluxos reais de automation/workflows.json
+```
+
+No modo simulado o Instagram usa o servidor de compartilhamento local (`NGD_SHARE_PUBLIC_URL=http://127.0.0.1:3211`) em vez do túnel do cloudflared, e o nó nativo do YouTube é trocado por uma chamada HTTP ao mock. As credenciais do n8n e o banco não são alterados; os fluxos ganham uma nota "MODO SIMULADO".
+
+Controle do mock (por rede ou `todas`):
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:3212/__mock/estado                                   # modos, publicações simuladas e últimas chamadas
+Invoke-RestMethod http://127.0.0.1:3212/__mock/modo -Method Post -ContentType application/json -Body '{"rede":"tiktok","modo":"auth"}'
+```
+
+Modos: `ok` publica e devolve link; `auth` responde token inválido no formato da plataforma; `recusado` simula vídeo rejeitado (YouTube e Facebook na hora, Instagram no contêiner, TikTok no status). Os erros chegam ao painel pela mesma rota da produção, então servem para conferir se a mensagem fica legível.
+
 ## Backup e manutenção
 
 Guarde juntos o banco do n8n (`data/n8n/.n8n`) e `data/automation-secrets.json`. Para backup consistente pare os dois serviços e copie a pasta `data`. Não apague a pasta de dados para atualizar o n8n; faça backup antes, mantenha as variáveis de `n8n.mjs` e teste os fluxos de novo.

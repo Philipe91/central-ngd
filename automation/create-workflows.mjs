@@ -7,8 +7,15 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'automation');
+const dataDir = process.env.NGD_DATA_DIR || path.join(root, 'data');
 const PANEL = 'http://127.0.0.1:3210';
-const GRAPH = 'https://graph.facebook.com/v21.0';
+// --simulate: os nós de rede apontam para o mock local (automation/mock-platforms.mjs) e nada é publicado de verdade.
+const SIM = process.argv.includes('--simulate');
+const MOCK = (process.env.NGD_MOCK_URL || 'http://127.0.0.1:3212').replace(/\/$/, '');
+const GRAPH = SIM ? `${MOCK}/graph/v21.0` : 'https://graph.facebook.com/v21.0';
+const RUPLOAD = SIM ? `${MOCK}/rupload/video-reels` : 'https://rupload.facebook.com/video-reels';
+const TIKTOK = SIM ? `${MOCK}/tiktok/v2` : 'https://open.tiktokapis.com/v2';
+const YOUTUBE = SIM ? `${MOCK}/youtube/v3` : 'https://www.googleapis.com/youtube/v3';
 
 // ---------- credenciais ----------
 const CRED = {
@@ -28,7 +35,8 @@ const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 function http(name, position, { method = 'GET', url, auth, body, binary, headers, query, timeout = 120000, responseFormat = 'json', neverError = true } = {}) {
   const p = { method, url, options: { timeout, response: { response: { neverError, responseFormat, fullResponse: false } } } };
-  if (auth === 'youtube') { p.authentication = 'predefinedCredentialType'; p.nodeCredentialType = 'youTubeOAuth2Api'; }
+  if (auth === 'youtube' && SIM) { auth = null; headers = { Authorization: 'Bearer youtube-simulado', ...(headers || {}) }; p.authentication = 'none'; }
+  else if (auth === 'youtube') { p.authentication = 'predefinedCredentialType'; p.nodeCredentialType = 'youTubeOAuth2Api'; }
   else if (auth) { p.authentication = 'genericCredentialType'; p.genericAuthType = 'httpHeaderAuth'; }
   else p.authentication = 'none';
   if (body !== undefined) { p.sendBody = true; p.specifyBody = 'json'; p.contentType = 'json'; p.jsonBody = body; }
@@ -50,7 +58,8 @@ const splitOut = (name, position, field) => ({ id: slug(name), name, type: 'n8n-
 const readFile = (name, position, selector) => ({ id: slug(name), name, type: 'n8n-nodes-base.readWriteFile', typeVersion: 1, position, parameters: { fileSelector: selector, options: { dataPropertyName: 'data' } } });
 const connect = (edges) => { const c = {}; for (const [from, to, output = 0] of edges) { c[from] ??= { main: [] }; while (c[from].main.length <= output) c[from].main.push([]); c[from].main[output].push({ node: to, type: 'main', index: 0 }); } return c; };
 const resultBody = (network, extra) => `={{ JSON.stringify({ contentId: ${JOB}.contentId, network: '${network}', ${extra} }) }}`;
-const failBody = network => resultBody(network, `status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900)`);
+// Mensagem de falha legível: erro da plataforma, motivo do TikTok, estado do contêiner do Instagram ou, por último, o JSON bruto.
+const failBody = network => resultBody(network, `status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900)`);
 
 // ---------- 1. Verificar conexão do painel (mantido) ----------
 const health = { id: 'ngdLocalHealth01', name: 'NGD · Verificar conexão do painel', active: false, settings, nodes: [
@@ -70,7 +79,8 @@ const publishNodes = [
 
   // YouTube
   readFile('Ler vídeo (YouTube)', pos(4, 0), '={{ $json.filePath }}'),
-  { id: 'youtube-upload', name: 'Enviar para o YouTube', type: 'n8n-nodes-base.youTube', typeVersion: 1, position: pos(5, 0), onError: 'continueRegularOutput', parameters: { resource: 'video', operation: 'upload', title: `={{ ${JOB}.title }}`, regionCode: 'BR', categoryId: '22', binaryProperty: 'data', options: { description: `={{ ${JOB}.text }}`, privacyStatus: 'public', selfDeclaredMadeForKids: false, notifySubscribers: true, tags: `={{ (${JOB}.hashtags || '').split(/\\s+/).filter(Boolean).map(t => t.replace('#','')).join(',') }}` } }, credentials: cred('youtube') },
+  SIM ? http('Enviar para o YouTube', pos(5, 0), { method: 'POST', url: `${MOCK}/youtube/upload/videos`, auth: 'youtube', binary: 'data', query: { part: 'snippet,status', title: `={{ ${JOB}.title }}` }, timeout: 900000 })
+    : { id: 'youtube-upload', name: 'Enviar para o YouTube', type: 'n8n-nodes-base.youTube', typeVersion: 1, position: pos(5, 0), onError: 'continueRegularOutput', parameters: { resource: 'video', operation: 'upload', title: `={{ ${JOB}.title }}`, regionCode: 'BR', categoryId: '22', binaryProperty: 'data', options: { description: `={{ ${JOB}.text }}`, privacyStatus: 'public', selfDeclaredMadeForKids: false, notifySubscribers: true, tags: `={{ (${JOB}.hashtags || '').split(/\\s+/).filter(Boolean).map(t => t.replace('#','')).join(',') }}` } }, credentials: cred('youtube') },
   ifNode('YouTube deu certo?', pos(6, 0), '={{ !!$json.id && !$json.error }}'),
   panel('Registrar sucesso YouTube', pos(7, -0.5), 'result', resultBody('youtube', "status: 'published', externalId: $json.id, url: 'https://youtube.com/shorts/' + $json.id")),
   panel('Registrar falha YouTube', pos(7, 0.5), 'result', failBody('youtube')),
@@ -79,7 +89,7 @@ const publishNodes = [
   http('FB: iniciar envio', pos(4, 2), { method: 'POST', url: `=${GRAPH}/{{ $json.integrations.pageId }}/video_reels`, auth: 'meta', body: '={{ JSON.stringify({ upload_phase: "start" }) }}' }),
   ifNode('FB iniciou?', pos(5, 2), '={{ !!$json.video_id && !$json.error }}'),
   readFile('Ler vídeo (Facebook)', pos(6, 1.5), `={{ ${JOB}.filePath }}`),
-  http('FB: enviar arquivo', pos(7, 1.5), { method: 'POST', url: `=https://rupload.facebook.com/video-reels/{{ $('FB: iniciar envio').item.json.video_id }}`, auth: 'meta', binary: 'data', headers: { offset: '0', file_size: `={{ ${JOB}.bytes }}` }, timeout: 900000 }),
+  http('FB: enviar arquivo', pos(7, 1.5), { method: 'POST', url: `=${RUPLOAD}/{{ $('FB: iniciar envio').item.json.video_id }}`, auth: 'meta', binary: 'data', headers: { offset: '0', file_size: `={{ ${JOB}.bytes }}` }, timeout: 900000 }),
   http('FB: concluir e publicar', pos(8, 1.5), { method: 'POST', url: `=${GRAPH}/{{ ${JOB}.integrations.pageId }}/video_reels`, auth: 'meta', query: { upload_phase: 'finish', video_id: "={{ $('FB: iniciar envio').item.json.video_id }}", video_state: 'PUBLISHED', description: `={{ ${JOB}.text }}` }, timeout: 300000 }),
   ifNode('FB publicou?', pos(9, 1.5), '={{ $json.success === true && !$json.error }}'),
   panel('Registrar sucesso Facebook', pos(10, 1), 'result', resultBody('facebook', "status: 'published', externalId: $('FB: iniciar envio').item.json.video_id, url: 'https://www.facebook.com/reel/' + $('FB: iniciar envio').item.json.video_id")),
@@ -98,12 +108,12 @@ const publishNodes = [
   panel('Registrar falha Instagram', pos(12, 4.5), 'result', failBody('instagram')),
 
   // TikTok
-  http('TT: iniciar envio', pos(4, 6), { method: 'POST', url: 'https://open.tiktokapis.com/v2/post/publish/video/init/', auth: 'tiktok', body: '={{ JSON.stringify({ post_info: { title: ($json.text || $json.title).slice(0, 2200), privacy_level: $json.integrations.privacy || "SELF_ONLY", disable_duet: false, disable_comment: false, disable_stitch: false, video_cover_timestamp_ms: 1000 }, source_info: { source: "FILE_UPLOAD", video_size: $json.bytes, chunk_size: $json.bytes, total_chunk_count: 1 } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('TT: iniciar envio', pos(4, 6), { method: 'POST', url: `${TIKTOK}/post/publish/video/init/`, auth: 'tiktok', body: '={{ JSON.stringify({ post_info: { title: ($json.text || $json.title).slice(0, 2200), privacy_level: $json.integrations.privacy || "SELF_ONLY", disable_duet: false, disable_comment: false, disable_stitch: false, video_cover_timestamp_ms: 1000 }, source_info: { source: "FILE_UPLOAD", video_size: $json.bytes, chunk_size: $json.bytes, total_chunk_count: 1 } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   ifNode('TT iniciou?', pos(5, 6), '={{ !!$json.data?.upload_url && $json.error?.code === "ok" }}'),
   readFile('Ler vídeo (TikTok)', pos(6, 5.5), `={{ ${JOB}.filePath }}`),
   http('TT: enviar arquivo', pos(7, 5.5), { method: 'PUT', url: "={{ $('TT: iniciar envio').item.json.data.upload_url }}", binary: 'data', headers: { 'Content-Type': 'video/mp4', 'Content-Range': `=bytes 0-{{ ${JOB}.bytes - 1 }}/{{ ${JOB}.bytes }}` }, timeout: 900000, responseFormat: 'text' }),
   wait('TT: aguardar processamento', pos(8, 5.5), 15),
-  http('TT: consultar estado', pos(9, 5.5), { method: 'POST', url: 'https://open.tiktokapis.com/v2/post/publish/status/fetch/', auth: 'tiktok', body: "={{ JSON.stringify({ publish_id: $('TT: iniciar envio').item.json.data.publish_id }) }}", headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('TT: consultar estado', pos(9, 5.5), { method: 'POST', url: `${TIKTOK}/post/publish/status/fetch/`, auth: 'tiktok', body: "={{ JSON.stringify({ publish_id: $('TT: iniciar envio').item.json.data.publish_id }) }}", headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   switchNode('TT: estado', pos(10, 5.5), '={{ $json.data?.status === "PUBLISH_COMPLETE" ? "ok" : (["PROCESSING_UPLOAD","PROCESSING_DOWNLOAD","SEND_TO_USER_INBOX"].includes($json.data?.status) && $runIndex < 25) ? "wait" : "fail" }}', ['ok', 'wait', 'fail']),
   panel('Registrar sucesso TikTok', pos(11, 5), 'result', resultBody('tiktok', "status: 'published', externalId: String($json.data?.publicaly_available_post_id?.[0] ?? $('TT: iniciar envio').item.json.data.publish_id), url: $json.data?.publicaly_available_post_id?.[0] ? 'https://www.tiktok.com/video/' + $json.data.publicaly_available_post_id[0] : ''")),
   panel('Registrar falha TikTok', pos(11, 6.5), 'result', failBody('tiktok')),
@@ -119,17 +129,19 @@ const publish = { id: 'ngdPublishQueue01', name: 'NGD · Publicar fila', active:
 ]) };
 
 // ---------- 3. Testar conexão ----------
-const answer = (name, position, account) => setNode(name, position, [['connected', '={{ !$json.error && !!(' + account + ') }}', 'boolean'], ['account', '={{ String(' + account + ' ?? "") }}'], ['error', '={{ String($json.error?.message ?? $json.error ?? "") }}']], false);
+// O TikTok devolve sempre `error: { code: "ok" }` em respostas boas; só é erro real quando o objeto existe com código diferente de "ok".
+const ERRO_REAL = '($json.error && $json.error.code !== "ok")';
+const answer = (name, position, account) => setNode(name, position, [['connected', `={{ !${ERRO_REAL} && !!(${account}) }}`, 'boolean'], ['account', '={{ String(' + account + ' ?? "") }}'], ['error', `={{ String(${ERRO_REAL} ? ($json.error.message || $json.error) : "") }}`]], false);
 const testNodes = [
   webhook('Pedido de teste', pos(0, 0), 'ngd-test-connection', 'POST', 'responseNode'),
   switchNode('Qual rede?', pos(1, 0), '={{ $json.body.network }}', ['youtube', 'facebook', 'instagram', 'tiktok']),
-  http('Testar YouTube', pos(2, -1.5), { method: 'GET', url: 'https://www.googleapis.com/youtube/v3/channels', auth: 'youtube', query: { part: 'snippet', mine: 'true' } }),
+  http('Testar YouTube', pos(2, -1.5), { method: 'GET', url: `${YOUTUBE}/channels`, auth: 'youtube', query: { part: 'snippet', mine: 'true' } }),
   answer('Resposta YouTube', pos(3, -1.5), '$json.items?.[0]?.snippet?.title'),
   http('Testar Facebook', pos(2, -0.5), { method: 'GET', url: `${GRAPH}/me`, auth: 'meta', query: { fields: 'id,name' } }),
   answer('Resposta Facebook', pos(3, -0.5), '$json.name'),
   http('Testar Instagram', pos(2, 0.5), { method: 'GET', url: `=${GRAPH}/{{ $json.body.integrations?.igUserId || 'me' }}`, auth: 'meta', query: { fields: 'username' } }),
   answer('Resposta Instagram', pos(3, 0.5), '$json.username'),
-  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: 'https://open.tiktokapis.com/v2/user/info/', auth: 'tiktok', query: { fields: 'display_name,username' } }),
+  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: `${TIKTOK}/user/info/`, auth: 'tiktok', query: { fields: 'display_name,username' } }),
   answer('Resposta TikTok', pos(3, 1.5), '($json.data?.user?.username || $json.data?.user?.display_name)'),
   { id: 'respond', name: 'Responder ao painel', type: 'n8n-nodes-base.respondToWebhook', typeVersion: 1.1, position: pos(4, 0), parameters: { respondWith: 'firstIncomingItem', options: {} } },
   note('Sobre este fluxo', [-80, -400], '## NGD · Testar conexão\nO painel chama este fluxo pelo botão "Testar conexão" de cada rede. Ele faz uma consulta simples ("quem sou eu") com a credencial correspondente e responde se funcionou.\n\nSe a credencial estiver vazia ou expirada, a resposta traz o erro da plataforma.', 520, 200),
@@ -149,13 +161,13 @@ const collectNodes = [
   panel('Buscar publicações', pos(1, 1), 'published', undefined, 'GET'),
   splitOut('Dividir publicações', pos(2, 1), 'items'),
   switchNode('Rede da publicação', pos(3, 1), '={{ $json.network }}', ['youtube', 'facebook', 'instagram', 'tiktok']),
-  http('Métricas YouTube', pos(4, -0.5), { method: 'GET', url: 'https://www.googleapis.com/youtube/v3/videos', auth: 'youtube', query: { part: 'statistics', id: '={{ $json.externalId }}' } }),
+  http('Métricas YouTube', pos(4, -0.5), { method: 'GET', url: `${YOUTUBE}/videos`, auth: 'youtube', query: { part: 'statistics', id: '={{ $json.externalId }}' } }),
   metric('Gravar YouTube', pos(5, -0.5), 'views: $json.items?.[0]?.statistics?.viewCount, likes: $json.items?.[0]?.statistics?.likeCount, comments: $json.items?.[0]?.statistics?.commentCount, shares: null'),
   http('Métricas Facebook', pos(4, 0.5), { method: 'GET', url: `=${GRAPH}/{{ $json.externalId }}`, auth: 'meta', query: { fields: 'views,likes.summary(true),comments.summary(true)' } }),
   metric('Gravar Facebook', pos(5, 0.5), 'views: $json.views, likes: $json.likes?.summary?.total_count, comments: $json.comments?.summary?.total_count, shares: null'),
   http('Métricas Instagram', pos(4, 1.5), { method: 'GET', url: `=${GRAPH}/{{ $json.externalId }}`, auth: 'meta', query: { fields: 'like_count,comments_count,insights.metric(views,shares)' } }),
   metric('Gravar Instagram', pos(5, 1.5), 'views: $json.insights?.data?.find(m => m.name === "views")?.values?.[0]?.value, likes: $json.like_count, comments: $json.comments_count, shares: $json.insights?.data?.find(m => m.name === "shares")?.values?.[0]?.value'),
-  http('Métricas TikTok', pos(4, 2.5), { method: 'POST', url: 'https://open.tiktokapis.com/v2/video/query/', auth: 'tiktok', query: { fields: 'id,view_count,like_count,comment_count,share_count' }, body: '={{ JSON.stringify({ filters: { video_ids: [$json.externalId] } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('Métricas TikTok', pos(4, 2.5), { method: 'POST', url: `${TIKTOK}/video/query/`, auth: 'tiktok', query: { fields: 'id,view_count,like_count,comment_count,share_count' }, body: '={{ JSON.stringify({ filters: { video_ids: [$json.externalId] } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   metric('Gravar TikTok', pos(5, 2.5), 'views: $json.data?.videos?.[0]?.view_count, likes: $json.data?.videos?.[0]?.like_count, comments: $json.data?.videos?.[0]?.comment_count, shares: $json.data?.videos?.[0]?.share_count'),
   note('Sobre a coleta', [-80, -400], '## NGD · Coletar resultados\nUma vez por dia (ou pelo botão em Resultados) busca visualizações, curtidas, comentários e compartilhamentos de cada publicação feita pela automação e grava no painel.\n\nCada rede expõe métricas diferentes; campos indisponíveis ficam vazios.', 520, 200),
 ];
@@ -166,10 +178,22 @@ const collect = { id: 'ngdCollectMetrics01', name: 'NGD · Coletar resultados', 
   ['Métricas YouTube', 'Gravar YouTube'], ['Métricas Facebook', 'Gravar Facebook'], ['Métricas Instagram', 'Gravar Instagram'], ['Métricas TikTok', 'Gravar TikTok'],
 ]) };
 
-fs.writeFileSync(path.join(dir, 'workflows.json'), JSON.stringify([health, publish, testFlow, collect], null, 2));
+const fluxos = [health, publish, testFlow, collect];
+if (SIM) {
+  for (const w of fluxos) w.nodes.push(note('Modo simulado', [-80, -640], `## ⚠ MODO SIMULADO
+Este fluxo aponta para o mock local em ${MOCK}. Nada é publicado de verdade.
+
+Para voltar aos fluxos reais: automation/simular.ps1 -Desligar`, 520, 160));
+  fs.mkdirSync(dataDir, { recursive: true });
+  const saida = path.join(dataDir, 'workflows.simulado.json');
+  fs.writeFileSync(saida, JSON.stringify(fluxos, null, 2));
+  console.log(`Fluxos SIMULADOS gerados em ${saida} (mock: ${MOCK}). Credenciais não foram tocadas.`);
+  process.exit(0);
+}
+fs.writeFileSync(path.join(dir, 'workflows.json'), JSON.stringify(fluxos, null, 2));
 
 // Credenciais: a da ponte recebe o token real; as das redes nascem vazias para o usuário preencher no n8n.
-const secret = JSON.parse(fs.readFileSync(path.join(root, 'data/automation-secrets.json'), 'utf8'));
+const secret = JSON.parse(fs.readFileSync(path.join(dataDir, 'automation-secrets.json'), 'utf8'));
 const credentials = [
   { ...CRED.bridge, data: { name: 'X-NGD-Automation', value: secret.bridgeToken } },
   { ...CRED.meta, data: { name: 'Authorization', value: 'OAuth COLE_AQUI_O_TOKEN_DA_PAGINA' } },
@@ -177,5 +201,5 @@ const credentials = [
   { ...CRED.youtube, data: { clientId: '', clientSecret: '', sendAdditionalBodyProperties: false, additionalBodyProperties: '' } },
 ];
 const onlyBridge = process.argv.includes('--only-bridge');
-fs.writeFileSync(path.join(root, 'data/n8n-import-credential.json'), JSON.stringify(onlyBridge ? credentials.slice(0, 1) : credentials), { mode: 0o600 });
+fs.writeFileSync(path.join(dataDir, 'n8n-import-credential.json'), JSON.stringify(onlyBridge ? credentials.slice(0, 1) : credentials), { mode: 0o600 });
 console.log(`Fluxos gerados: ${[health, publish, testFlow, collect].map(w => w.name).join(' | ')}. Credenciais preparadas: ${onlyBridge ? 1 : credentials.length}.`);

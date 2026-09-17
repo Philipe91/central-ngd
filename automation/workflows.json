@@ -473,7 +473,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -773,7 +773,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -1187,7 +1187,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -1553,7 +1553,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'failed', error: String($json.error?.message ?? $json.error?.error_user_msg ?? $json.error ?? JSON.stringify($json)).slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -2200,7 +2200,7 @@
               {
                 "id": "connected",
                 "name": "connected",
-                "value": "={{ !$json.error && !!($json.items?.[0]?.snippet?.title) }}",
+                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!($json.items?.[0]?.snippet?.title) }}",
                 "type": "boolean"
               },
               {
@@ -2212,7 +2212,7 @@
               {
                 "id": "error",
                 "name": "error",
-                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "value": "={{ String(($json.error && $json.error.code !== \"ok\") ? ($json.error.message || $json.error) : \"\") }}",
                 "type": "string"
               }
             ]
@@ -2279,7 +2279,7 @@
               {
                 "id": "connected",
                 "name": "connected",
-                "value": "={{ !$json.error && !!($json.name) }}",
+                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!($json.name) }}",
                 "type": "boolean"
               },
               {
@@ -2291,7 +2291,7 @@
               {
                 "id": "error",
                 "name": "error",
-                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "value": "={{ String(($json.error && $json.error.code !== \"ok\") ? ($json.error.message || $json.error) : \"\") }}",
                 "type": "string"
               }
             ]
@@ -2358,7 +2358,7 @@
               {
                 "id": "connected",
                 "name": "connected",
-                "value": "={{ !$json.error && !!($json.username) }}",
+                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!($json.username) }}",
                 "type": "boolean"
               },
               {
@@ -2370,7 +2370,7 @@
               {
                 "id": "error",
                 "name": "error",
-                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "value": "={{ String(($json.error && $json.error.code !== \"ok\") ? ($json.error.message || $json.error) : \"\") }}",
                 "type": "string"
               }
             ]
@@ -2437,7 +2437,7 @@
               {
                 "id": "connected",
                 "name": "connected",
-                "value": "={{ !$json.error && !!(($json.data?.user?.username || $json.data?.user?.display_name)) }}",
+                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!(($json.data?.user?.username || $json.data?.user?.display_name)) }}",
                 "type": "boolean"
               },
               {
@@ -2449,7 +2449,7 @@
               {
                 "id": "error",
                 "name": "error",
-                "value": "={{ String($json.error?.message ?? $json.error ?? \"\") }}",
+                "value": "={{ String(($json.error && $json.error.code !== \"ok\") ? ($json.error.message || $json.error) : \"\") }}",
                 "type": "string"
               }
             ]

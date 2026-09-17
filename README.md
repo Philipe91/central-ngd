@@ -58,3 +58,5 @@ Limites conhecidos: YouTube permite cerca de 6 envios por dia com a cota padrão
 ## Verificação
 
 `npm run check` confere a sintaxe. `npm test` roda os testes (dados temporários, inclusive uma renderização real com ffmpeg quando as ferramentas estão instaladas).
+
+Para testar a automação inteira sem contas reais, `.utomation\simular.ps1` liga um mock local das plataformas (ver `automation/README.md`, seção "Modo simulado"); `-Desligar` volta ao modo real.
