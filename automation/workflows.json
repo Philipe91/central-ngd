@@ -322,7 +322,7 @@
           -420
         ],
         "parameters": {
-          "content": "## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha \"NGD · YouTube\", \"NGD · Meta\" e \"NGD · TikTok\". Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.",
+          "content": "## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha \"NGD · YouTube\" e \"NGD · Meta\". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.",
           "width": 520,
           "height": 260
         }
@@ -1218,8 +1218,7 @@
               }
             }
           },
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "none",
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
@@ -1229,19 +1228,17 @@
           "headerParameters": {
             "parameters": [
               {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + ($('Dividir trabalhos').item.json.tiktokToken) }}"
+              },
+              {
                 "name": "Content-Type",
                 "value": "application/json; charset=UTF-8"
               }
             ]
           }
         },
-        "onError": "continueRegularOutput",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "ngdTikTok01",
-            "name": "NGD · TikTok (access token)"
-          }
-        }
+        "onError": "continueRegularOutput"
       },
       {
         "id": "tt-iniciou-",
@@ -1374,8 +1371,7 @@
               }
             }
           },
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "none",
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
@@ -1385,19 +1381,17 @@
           "headerParameters": {
             "parameters": [
               {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + ($('Dividir trabalhos').item.json.tiktokToken) }}"
+              },
+              {
                 "name": "Content-Type",
                 "value": "application/json; charset=UTF-8"
               }
             ]
           }
         },
-        "onError": "continueRegularOutput",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "ngdTikTok01",
-            "name": "NGD · TikTok (access token)"
-          }
-        }
+        "onError": "continueRegularOutput"
       },
       {
         "id": "tt-estado",
@@ -2401,8 +2395,17 @@
               }
             }
           },
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "none",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + ($json.body.tiktokToken) }}"
+              }
+            ]
+          },
           "sendQuery": true,
           "specifyQuery": "keypair",
           "queryParameters": {
@@ -2414,13 +2417,7 @@
             ]
           }
         },
-        "onError": "continueRegularOutput",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "ngdTikTok01",
-            "name": "NGD · TikTok (access token)"
-          }
-        }
+        "onError": "continueRegularOutput"
       },
       {
         "id": "resposta-tiktok",
@@ -3114,8 +3111,7 @@
               }
             }
           },
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
+          "authentication": "none",
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
@@ -3124,6 +3120,10 @@
           "specifyHeaders": "keypair",
           "headerParameters": {
             "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + ($json.tiktokToken) }}"
+              },
               {
                 "name": "Content-Type",
                 "value": "application/json; charset=UTF-8"
@@ -3141,13 +3141,7 @@
             ]
           }
         },
-        "onError": "continueRegularOutput",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "ngdTikTok01",
-            "name": "NGD · TikTok (access token)"
-          }
-        }
+        "onError": "continueRegularOutput"
       },
       {
         "id": "gravar-tiktok",

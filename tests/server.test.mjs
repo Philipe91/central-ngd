@@ -91,3 +91,31 @@ test('fluxo local persiste upload e planejamento, rejeita entradas malformadas e
   assert.equal(fs.readdirSync(path.join(temporary, 'videos')).length, 0);
   assert.equal((await request('/api/state')).body.contents.length, 0);
 });
+
+test('TikTok: chaves só no arquivo de segredos, retorno exige state válido e a coleta omite o TikTok sem token', async () => {
+  const status = await request('/api/tiktok/status');
+  assert.equal(status.body.configured, false);
+  assert.equal((await request('/api/tiktok/config', json('POST', { clientKey: 'x', clientSecret: '' }))).status, 400);
+  assert.equal((await request('/api/tiktok/oauth/start', { method: 'POST' })).status, 400);
+  const saved = await request('/api/tiktok/config', json('POST', { clientKey: 'awtestclientkey1', clientSecret: 'segredo-de-teste-123' }));
+  assert.equal(saved.body.configured, true); assert.equal(saved.body.connected, false);
+  assert.ok(!JSON.stringify(saved.body).includes('segredo-de-teste'));
+  const file = JSON.parse(fs.readFileSync(path.join(temporary, 'automation-secrets.json'), 'utf8'));
+  assert.equal(file.tiktok.clientSecret, 'segredo-de-teste-123'); assert.equal(file.bridgeToken, token);
+  const state = await request('/api/state');
+  assert.equal(state.body.runtime.tiktok.clientKey, 'awte…ey1'); assert.ok(!JSON.stringify(state.body).includes('segredo-de-teste'));
+  const callback = await fetch(shareBase + '/tiktok/callback?code=abc&state=invalido');
+  assert.equal(callback.status, 400); assert.match(await callback.text(), /inválido ou expirado/);
+  assert.equal((await fetch(shareBase + '/tiktok/callback')).status, 400);
+  const test = await request('/api/networks/tiktok/test', { method: 'POST' });
+  assert.equal(test.body.connected, false); assert.match(test.body.error, /não conectado/);
+  const fixture = Buffer.alloc(32); fixture.writeUInt32BE(32); fixture.write('ftyp', 4); fixture.write('isom', 8);
+  const upload = new FormData(); upload.append('video', new Blob([fixture], { type: 'video/mp4' }), 'tt.mp4'); upload.append('title', 'Vídeo TikTok'); upload.append('channels', '["tiktok","youtube"]');
+  const content = (await request('/api/contents', { method: 'POST', body: upload })).body;
+  assert.equal((await request('/api/automation/result', bridge('POST', { contentId: content.id, network: 'youtube', status: 'published', url: 'https://youtube.com/shorts/tt1', externalId: 'tt1' }))).status, 200);
+  assert.equal((await request('/api/automation/result', bridge('POST', { contentId: content.id, network: 'tiktok', status: 'published', url: 'https://www.tiktok.com/video/1', externalId: '1' }))).status, 200);
+  const published = await request('/api/automation/published', { headers: { 'X-NGD-Automation': token } });
+  assert.ok(published.body.items.length >= 1); assert.ok(published.body.items.every(i => i.network !== 'tiktok'));
+  assert.ok(!JSON.stringify(published.body).includes('tiktokToken'));
+  assert.equal((await request('/api/tiktok/disconnect', { method: 'POST' })).body.connected, false);
+});

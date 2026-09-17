@@ -33,9 +33,11 @@ const JOB = "$('Dividir trabalhos').item.json";
 const PUB = "$('Dividir publicações').item.json";
 const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-function http(name, position, { method = 'GET', url, auth, body, binary, headers, query, timeout = 120000, responseFormat = 'json', neverError = true } = {}) {
+function http(name, position, { method = 'GET', url, auth, token, body, binary, headers, query, timeout = 120000, responseFormat = 'json', neverError = true } = {}) {
   const p = { method, url, options: { timeout, response: { response: { neverError, responseFormat, fullResponse: false } } } };
-  if (auth === 'youtube' && SIM) { auth = null; headers = { Authorization: 'Bearer youtube-simulado', ...(headers || {}) }; p.authentication = 'none'; }
+  // TikTok: o token vem do painel em cada trabalho (expressão em `token`), sem credencial guardada no n8n.
+  if (auth === 'tiktok') { auth = null; headers = { Authorization: `={{ 'Bearer ' + (${token}) }}`, ...(headers || {}) }; p.authentication = 'none'; }
+  else if (auth === 'youtube' && SIM) { auth = null; headers = { Authorization: 'Bearer youtube-simulado', ...(headers || {}) }; p.authentication = 'none'; }
   else if (auth === 'youtube') { p.authentication = 'predefinedCredentialType'; p.nodeCredentialType = 'youTubeOAuth2Api'; }
   else if (auth) { p.authentication = 'genericCredentialType'; p.genericAuthType = 'httpHeaderAuth'; }
   else p.authentication = 'none';
@@ -75,7 +77,7 @@ const publishNodes = [
   panel('Buscar trabalhos vencidos', pos(1, 1), 'claim', '={{ JSON.stringify({ limit: 10 }) }}'),
   splitOut('Dividir trabalhos', pos(2, 1), 'jobs'),
   switchNode('Por rede', pos(3, 1), '={{ $json.network }}', ['youtube', 'facebook', 'instagram', 'tiktok']),
-  note('Como funciona', [-80, -420], '## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha "NGD · YouTube", "NGD · Meta" e "NGD · TikTok". Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.', 520, 260),
+  note('Como funciona', [-80, -420], '## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha "NGD · YouTube" e "NGD · Meta". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.', 520, 260),
 
   // YouTube
   readFile('Ler vídeo (YouTube)', pos(4, 0), '={{ $json.filePath }}'),
@@ -108,12 +110,12 @@ const publishNodes = [
   panel('Registrar falha Instagram', pos(12, 4.5), 'result', failBody('instagram')),
 
   // TikTok
-  http('TT: iniciar envio', pos(4, 6), { method: 'POST', url: `${TIKTOK}/post/publish/video/init/`, auth: 'tiktok', body: '={{ JSON.stringify({ post_info: { title: ($json.text || $json.title).slice(0, 2200), privacy_level: $json.integrations.privacy || "SELF_ONLY", disable_duet: false, disable_comment: false, disable_stitch: false, video_cover_timestamp_ms: 1000 }, source_info: { source: "FILE_UPLOAD", video_size: $json.bytes, chunk_size: $json.bytes, total_chunk_count: 1 } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('TT: iniciar envio', pos(4, 6), { method: 'POST', url: `${TIKTOK}/post/publish/video/init/`, auth: 'tiktok', token: `${JOB}.tiktokToken`, body: '={{ JSON.stringify({ post_info: { title: ($json.text || $json.title).slice(0, 2200), privacy_level: $json.integrations.privacy || "SELF_ONLY", disable_duet: false, disable_comment: false, disable_stitch: false, video_cover_timestamp_ms: 1000 }, source_info: { source: "FILE_UPLOAD", video_size: $json.bytes, chunk_size: $json.bytes, total_chunk_count: 1 } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   ifNode('TT iniciou?', pos(5, 6), '={{ !!$json.data?.upload_url && $json.error?.code === "ok" }}'),
   readFile('Ler vídeo (TikTok)', pos(6, 5.5), `={{ ${JOB}.filePath }}`),
   http('TT: enviar arquivo', pos(7, 5.5), { method: 'PUT', url: "={{ $('TT: iniciar envio').item.json.data.upload_url }}", binary: 'data', headers: { 'Content-Type': 'video/mp4', 'Content-Range': `=bytes 0-{{ ${JOB}.bytes - 1 }}/{{ ${JOB}.bytes }}` }, timeout: 900000, responseFormat: 'text' }),
   wait('TT: aguardar processamento', pos(8, 5.5), 15),
-  http('TT: consultar estado', pos(9, 5.5), { method: 'POST', url: `${TIKTOK}/post/publish/status/fetch/`, auth: 'tiktok', body: "={{ JSON.stringify({ publish_id: $('TT: iniciar envio').item.json.data.publish_id }) }}", headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('TT: consultar estado', pos(9, 5.5), { method: 'POST', url: `${TIKTOK}/post/publish/status/fetch/`, auth: 'tiktok', token: `${JOB}.tiktokToken`, body: "={{ JSON.stringify({ publish_id: $('TT: iniciar envio').item.json.data.publish_id }) }}", headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   switchNode('TT: estado', pos(10, 5.5), '={{ $json.data?.status === "PUBLISH_COMPLETE" ? "ok" : (["PROCESSING_UPLOAD","PROCESSING_DOWNLOAD","SEND_TO_USER_INBOX"].includes($json.data?.status) && $runIndex < 25) ? "wait" : "fail" }}', ['ok', 'wait', 'fail']),
   panel('Registrar sucesso TikTok', pos(11, 5), 'result', resultBody('tiktok', "status: 'published', externalId: String($json.data?.publicaly_available_post_id?.[0] ?? $('TT: iniciar envio').item.json.data.publish_id), url: $json.data?.publicaly_available_post_id?.[0] ? 'https://www.tiktok.com/video/' + $json.data.publicaly_available_post_id[0] : ''")),
   panel('Registrar falha TikTok', pos(11, 6.5), 'result', failBody('tiktok')),
@@ -141,7 +143,7 @@ const testNodes = [
   answer('Resposta Facebook', pos(3, -0.5), '$json.name'),
   http('Testar Instagram', pos(2, 0.5), { method: 'GET', url: `=${GRAPH}/{{ $json.body.integrations?.igUserId || 'me' }}`, auth: 'meta', query: { fields: 'username' } }),
   answer('Resposta Instagram', pos(3, 0.5), '$json.username'),
-  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: `${TIKTOK}/user/info/`, auth: 'tiktok', query: { fields: 'display_name,username' } }),
+  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: `${TIKTOK}/user/info/`, auth: 'tiktok', token: '$json.body.tiktokToken', query: { fields: 'display_name,username' } }),
   answer('Resposta TikTok', pos(3, 1.5), '($json.data?.user?.username || $json.data?.user?.display_name)'),
   { id: 'respond', name: 'Responder ao painel', type: 'n8n-nodes-base.respondToWebhook', typeVersion: 1.1, position: pos(4, 0), parameters: { respondWith: 'firstIncomingItem', options: {} } },
   note('Sobre este fluxo', [-80, -400], '## NGD · Testar conexão\nO painel chama este fluxo pelo botão "Testar conexão" de cada rede. Ele faz uma consulta simples ("quem sou eu") com a credencial correspondente e responde se funcionou.\n\nSe a credencial estiver vazia ou expirada, a resposta traz o erro da plataforma.', 520, 200),
@@ -167,7 +169,7 @@ const collectNodes = [
   metric('Gravar Facebook', pos(5, 0.5), 'views: $json.views, likes: $json.likes?.summary?.total_count, comments: $json.comments?.summary?.total_count, shares: null'),
   http('Métricas Instagram', pos(4, 1.5), { method: 'GET', url: `=${GRAPH}/{{ $json.externalId }}`, auth: 'meta', query: { fields: 'like_count,comments_count,insights.metric(views,shares)' } }),
   metric('Gravar Instagram', pos(5, 1.5), 'views: $json.insights?.data?.find(m => m.name === "views")?.values?.[0]?.value, likes: $json.like_count, comments: $json.comments_count, shares: $json.insights?.data?.find(m => m.name === "shares")?.values?.[0]?.value'),
-  http('Métricas TikTok', pos(4, 2.5), { method: 'POST', url: `${TIKTOK}/video/query/`, auth: 'tiktok', query: { fields: 'id,view_count,like_count,comment_count,share_count' }, body: '={{ JSON.stringify({ filters: { video_ids: [$json.externalId] } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
+  http('Métricas TikTok', pos(4, 2.5), { method: 'POST', url: `${TIKTOK}/video/query/`, auth: 'tiktok', token: '$json.tiktokToken', query: { fields: 'id,view_count,like_count,comment_count,share_count' }, body: '={{ JSON.stringify({ filters: { video_ids: [$json.externalId] } }) }}', headers: { 'Content-Type': 'application/json; charset=UTF-8' } }),
   metric('Gravar TikTok', pos(5, 2.5), 'views: $json.data?.videos?.[0]?.view_count, likes: $json.data?.videos?.[0]?.like_count, comments: $json.data?.videos?.[0]?.comment_count, shares: $json.data?.videos?.[0]?.share_count'),
   note('Sobre a coleta', [-80, -400], '## NGD · Coletar resultados\nUma vez por dia (ou pelo botão em Resultados) busca visualizações, curtidas, comentários e compartilhamentos de cada publicação feita pela automação e grava no painel.\n\nCada rede expõe métricas diferentes; campos indisponíveis ficam vazios.', 520, 200),
 ];

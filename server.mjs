@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createStore, NETWORKS } from './lib/store.mjs';
 import { AUTOMATED, claimJobs, applyResult, applyMetrics, jobsSnapshot, expireStuck, syncStatus, textFor } from './lib/queue.mjs';
 import * as media from './lib/media.mjs';
+import { createTikTokAuth } from './lib/tiktok-auth.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = process.env.NGD_DATA_DIR || path.join(root, 'data');
@@ -24,6 +25,8 @@ function bad(message, status = 400) { const e = new Error(message); e.status = s
 function secrets() { const file = path.join(dataDir, 'automation-secrets.json'); return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {}; }
 function bridgeSecret() { return secrets().bridgeToken || null; }
 function shareSecret() { return secrets().shareSecret || secrets().bridgeToken || null; }
+// TikTok: o painel guarda e renova o token (data/automation-secrets.json) e o entrega ao n8n em cada trabalho dessa rede.
+const tiktokAuth = createTikTokAuth({ file: path.join(dataDir, 'automation-secrets.json'), log: message => { try { store.change(d => store.log(d, message)); } catch {} } });
 function n8nBase() { return store.db.settings.n8nUrl.replace('localhost', '127.0.0.1'); }
 async function n8nWebhook(name, body, timeout = 15000) {
   const token = bridgeSecret();
@@ -112,6 +115,10 @@ app.post('/api/automation/claim', authenticateBridge, async (req, res, next) => 
         } catch (error) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'Link temporário indisponível: ' + error.message })); continue; }
       }
       if (job.network === 'tiktok' && job.bytes > 64 * 1024 * 1024) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'O TikTok recebe até 64 MB por envio nesta versão. Reduza o vídeo.' })); continue; }
+      if (job.network === 'tiktok') {
+        try { job.tiktokToken = await tiktokAuth.getFreshToken(); }
+        catch (error) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: error.message })); continue; }
+      }
       ready.push(job);
     }
     res.json({ ok: true, checkedAt: new Date().toISOString(), jobs: ready, total: ready.length });
@@ -129,8 +136,12 @@ app.post('/api/automation/connection', authenticateBridge, (req, res) => {
   store.change(d => { d.connections[network] = { connected: !!req.body.connected, account: clean(String(req.body.account ?? ''), 120), error: clean(String(req.body.error ?? ''), 500), checkedAt: new Date().toISOString() }; });
   res.json({ ok: true });
 });
-app.get('/api/automation/published', authenticateBridge, (req, res) => {
-  const items = store.db.contents.flatMap(c => Object.entries(c.posts || {}).filter(([n, p]) => p.status === 'published' && p.externalId && AUTOMATED.includes(n)).map(([n, p]) => ({ contentId: c.id, network: n, externalId: p.externalId, url: p.url, title: c.title })));
+app.get('/api/automation/published', authenticateBridge, async (req, res) => {
+  let items = store.db.contents.flatMap(c => Object.entries(c.posts || {}).filter(([n, p]) => p.status === 'published' && p.externalId && AUTOMATED.includes(n)).map(([n, p]) => ({ contentId: c.id, network: n, externalId: p.externalId, url: p.url, title: c.title })));
+  if (items.some(i => i.network === 'tiktok')) {
+    let tiktokToken = ''; try { tiktokToken = await tiktokAuth.getFreshToken(); } catch {}
+    items = tiktokToken ? items.map(i => (i.network === 'tiktok' ? { ...i, tiktokToken } : i)) : items.filter(i => i.network !== 'tiktok');
+  }
   res.json({ ok: true, items, integrations: store.db.integrations, total: items.length });
 });
 app.post('/api/automation/metrics', authenticateBridge, (req, res) => {
@@ -144,7 +155,19 @@ const upload = multer({ storage: multer.diskStorage({ destination: uploadDir, fi
   if (!['.mp4', '.mov', '.webm'].includes(path.extname(file.originalname).toLowerCase())) return cb(Object.assign(new Error('Envie um vídeo MP4, MOV ou WebM.'), { status: 400 }));
   cb(null, true);
 } });
-app.get('/api/state', (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ ...store.db, runtime: { toolsMissing: media.tools().missing, tunnel: media.tunnelStatus(), cookies: fs.existsSync(cookiesFile), sharePort: SHARE_PORT } }); });
+app.get('/api/state', (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ ...store.db, runtime: { toolsMissing: media.tools().missing, tunnel: media.tunnelStatus(), cookies: fs.existsSync(cookiesFile), sharePort: SHARE_PORT, tiktok: tiktokAuth.status() } }); });
+// TikTok: chave e segredo entram só por aqui (127.0.0.1); a autorização volta pelo túnel no servidor de compartilhamento.
+app.get('/api/tiktok/status', (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json(tiktokAuth.status()); });
+app.post('/api/tiktok/config', (req, res) => { res.json(tiktokAuth.setConfig({ clientKey: req.body?.clientKey, clientSecret: req.body?.clientSecret })); });
+app.post('/api/tiktok/oauth/start', async (req, res, next) => {
+  try {
+    if (!tiktokAuth.status().configured) bad('Salve a client key e o client secret antes de conectar.');
+    const base = await media.ensureTunnel(SHARE_PORT, path.join(dataDir, 'tunnel.log'));
+    const { authUrl, redirectUri } = tiktokAuth.startAuth(base + '/tiktok/callback');
+    res.json({ authUrl, redirectUri });
+  } catch (error) { next(error); }
+});
+app.post('/api/tiktok/disconnect', (req, res) => { store.change(d => { d.connections.tiktok = { connected: false, account: '', error: 'Desconectado pelo painel.', checkedAt: new Date().toISOString() }; store.log(d, 'TikTok desconectado pelo painel.'); }); res.json(tiktokAuth.disconnect()); });
 app.post('/api/contents', upload.single('video'), (req, res, next) => {
   try {
     if (!req.file) bad('Selecione um vídeo.');
@@ -244,8 +267,13 @@ app.post('/api/networks/:network/test', async (req, res) => {
   const network = req.params.network;
   if (!AUTOMATED.includes(network)) bad('Esta rede não tem teste automático.');
   let result;
+  const payload = { network };
+  if (network === 'tiktok') {
+    try { payload.tiktokToken = await tiktokAuth.getFreshToken(); }
+    catch (error) { store.change(d => { d.connections[network] = { connected: false, account: '', error: error.message, checkedAt: new Date().toISOString() }; }); return res.json(store.db.connections[network]); }
+  }
   try {
-    const r = await n8nWebhook('ngd-test-connection', { network }, 30000);
+    const r = await n8nWebhook('ngd-test-connection', payload, 30000);
     const d = r.data && typeof r.data === 'object' ? (Array.isArray(r.data) ? r.data[0] : r.data) : {};
     result = r.ok ? { connected: !!d.connected, account: clean(String(d.account ?? ''), 120), error: clean(String(d.error ?? ''), 500) } : { connected: false, account: '', error: r.status === 404 ? 'Fluxo "NGD · Testar conexão" não está ativo no n8n.' : `O n8n respondeu ${r.status}. Abra o fluxo de teste e escolha a credencial desta rede.` };
   } catch (error) { result = { connected: false, account: '', error: 'O n8n não respondeu: ' + error.message }; }
@@ -278,6 +306,17 @@ shareApp.get('/share/:token', (req, res) => {
   if (!fs.existsSync(file)) return res.status(404).type('text').send('Arquivo indisponível.');
   res.setHeader('Cache-Control', 'no-store');
   res.sendFile(file, { dotfiles: 'deny', headers: { 'Content-Type': 'video/mp4' } });
+});
+// Retorno da autorização do TikTok (passa pelo túnel público): só aceita um state emitido pelo painel, uma vez.
+shareApp.get('/tiktok/callback', async (req, res) => {
+  const page = (title, text) => `<!doctype html><meta charset="utf-8"><title>${title}</title><body style="font-family:sans-serif;max-width:520px;margin:60px auto;text-align:center"><h1>${title}</h1><p>${text}</p></body>`;
+  try {
+    const status = await tiktokAuth.handleCallback(req.query);
+    store.change(d => { d.connections.tiktok = { connected: true, account: status.openId ? 'conta autorizada' : '', error: '', checkedAt: new Date().toISOString() }; });
+    res.setHeader('Cache-Control', 'no-store'); res.type('html').send(page('TikTok conectado', 'Pode fechar esta aba e voltar para a Central NGD.'));
+  } catch (error) {
+    res.status(error.status || 500).type('html').send(page('Não deu certo', error.status ? error.message : 'Tente conectar de novo pelo painel.'));
+  }
 });
 shareApp.use((req, res) => res.status(404).type('text').send('Nada aqui.'));
 
