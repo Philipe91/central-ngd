@@ -2412,7 +2412,7 @@
             "parameters": [
               {
                 "name": "fields",
-                "value": "display_name,username"
+                "value": "open_id,display_name"
               }
             ]
           }
@@ -2434,13 +2434,13 @@
               {
                 "id": "connected",
                 "name": "connected",
-                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!(($json.data?.user?.username || $json.data?.user?.display_name)) }}",
+                "value": "={{ !($json.error && $json.error.code !== \"ok\") && !!(($json.data?.user?.display_name || $json.data?.user?.open_id)) }}",
                 "type": "boolean"
               },
               {
                 "id": "account",
                 "name": "account",
-                "value": "={{ String(($json.data?.user?.username || $json.data?.user?.display_name) ?? \"\") }}",
+                "value": "={{ String(($json.data?.user?.display_name || $json.data?.user?.open_id) ?? \"\") }}",
                 "type": "string"
               },
               {

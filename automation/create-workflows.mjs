@@ -143,8 +143,8 @@ const testNodes = [
   answer('Resposta Facebook', pos(3, -0.5), '$json.name'),
   http('Testar Instagram', pos(2, 0.5), { method: 'GET', url: `=${GRAPH}/{{ $json.body.integrations?.igUserId || 'me' }}`, auth: 'meta', query: { fields: 'username' } }),
   answer('Resposta Instagram', pos(3, 0.5), '$json.username'),
-  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: `${TIKTOK}/user/info/`, auth: 'tiktok', token: '$json.body.tiktokToken', query: { fields: 'display_name,username' } }),
-  answer('Resposta TikTok', pos(3, 1.5), '($json.data?.user?.username || $json.data?.user?.display_name)'),
+  http('Testar TikTok', pos(2, 1.5), { method: 'GET', url: `${TIKTOK}/user/info/`, auth: 'tiktok', token: '$json.body.tiktokToken', query: { fields: 'open_id,display_name' } }),
+  answer('Resposta TikTok', pos(3, 1.5), '($json.data?.user?.display_name || $json.data?.user?.open_id)'),
   { id: 'respond', name: 'Responder ao painel', type: 'n8n-nodes-base.respondToWebhook', typeVersion: 1.1, position: pos(4, 0), parameters: { respondWith: 'firstIncomingItem', options: {} } },
   note('Sobre este fluxo', [-80, -400], '## NGD · Testar conexão\nO painel chama este fluxo pelo botão "Testar conexão" de cada rede. Ele faz uma consulta simples ("quem sou eu") com a credencial correspondente e responde se funcionou.\n\nSe a credencial estiver vazia ou expirada, a resposta traz o erro da plataforma.', 520, 200),
 ];
