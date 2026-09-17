@@ -62,6 +62,7 @@ test('texto por rede usa legenda específica ou legenda + hashtags', () => {
   const c = content({ hashtags: '#ngd #grafica', texts: { tiktok: 'Só para o TikTok' } });
   assert.equal(textFor(c, 'youtube'), 'Acabamento fosco\n\n#ngd #grafica');
   assert.equal(textFor(c, 'tiktok'), 'Só para o TikTok');
+  assert.equal(textFor(content({ caption: 'Veja o **efeito** #NGD', hashtags: '#ngd #Grafica' }), 'facebook'), 'Veja o efeito #NGD\n\n#Grafica');
   assert.equal(syncStatus(content({ scheduledAt: '' })).status, 'draft');
 });
 

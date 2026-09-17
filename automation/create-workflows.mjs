@@ -83,15 +83,17 @@ const publishNodes = [
   readFile('Ler vídeo (YouTube)', pos(4, 0), '={{ $json.filePath }}'),
   SIM ? http('Enviar para o YouTube', pos(5, 0), { method: 'POST', url: `${MOCK}/youtube/upload/videos`, auth: 'youtube', binary: 'data', query: { part: 'snippet,status', title: `={{ ${JOB}.title }}` }, timeout: 900000 })
     : { id: 'youtube-upload', name: 'Enviar para o YouTube', type: 'n8n-nodes-base.youTube', typeVersion: 1, position: pos(5, 0), onError: 'continueRegularOutput', parameters: { resource: 'video', operation: 'upload', title: `={{ ${JOB}.title }}`, regionCode: 'BR', categoryId: '22', binaryProperty: 'data', options: { description: `={{ ${JOB}.text }}`, privacyStatus: 'public', selfDeclaredMadeForKids: false, notifySubscribers: true, tags: `={{ (${JOB}.hashtags || '').split(/\\s+/).filter(Boolean).map(t => t.replace('#','')).join(',') }}` } }, credentials: cred('youtube') },
-  ifNode('YouTube deu certo?', pos(6, 0), '={{ !!$json.id && !$json.error }}'),
-  panel('Registrar sucesso YouTube', pos(7, -0.5), 'result', resultBody('youtube', "status: 'published', externalId: $json.id, url: 'https://youtube.com/shorts/' + $json.id")),
+  // O nó do YouTube do n8n 2.x devolve { uploadId } (o ID do vídeo); versões antigas devolviam { id }.
+  ifNode('YouTube deu certo?', pos(6, 0), '={{ !!($json.id || $json.uploadId) && !$json.error }}'),
+  panel('Registrar sucesso YouTube', pos(7, -0.5), 'result', resultBody('youtube', "status: 'published', externalId: ($json.id || $json.uploadId), url: 'https://youtube.com/shorts/' + ($json.id || $json.uploadId)")),
   panel('Registrar falha YouTube', pos(7, 0.5), 'result', failBody('youtube')),
 
   // Facebook Reels
   http('FB: iniciar envio', pos(4, 2), { method: 'POST', url: `=${GRAPH}/{{ $json.integrations.pageId }}/video_reels`, auth: 'meta', body: '={{ JSON.stringify({ upload_phase: "start" }) }}' }),
   ifNode('FB iniciou?', pos(5, 2), '={{ !!$json.video_id && !$json.error }}'),
   readFile('Ler vídeo (Facebook)', pos(6, 1.5), `={{ ${JOB}.filePath }}`),
-  http('FB: enviar arquivo', pos(7, 1.5), { method: 'POST', url: `=${RUPLOAD}/{{ $('FB: iniciar envio').item.json.video_id }}`, auth: 'meta', binary: 'data', headers: { offset: '0', file_size: `={{ ${JOB}.bytes }}` }, timeout: 900000 }),
+  // A Meta devolve o endereço de envio (upload_url) na fase "start"; o caminho fixo /video-reels/ID não existe mais.
+  http('FB: enviar arquivo', pos(7, 1.5), { method: 'POST', url: `={{ $('FB: iniciar envio').item.json.upload_url || '${RUPLOAD}/' + $('FB: iniciar envio').item.json.video_id }}`, auth: 'meta', binary: 'data', headers: { offset: '0', file_size: `={{ ${JOB}.bytes }}` }, timeout: 900000 }),
   http('FB: concluir e publicar', pos(8, 1.5), { method: 'POST', url: `=${GRAPH}/{{ ${JOB}.integrations.pageId }}/video_reels`, auth: 'meta', query: { upload_phase: 'finish', video_id: "={{ $('FB: iniciar envio').item.json.video_id }}", video_state: 'PUBLISHED', description: `={{ ${JOB}.text }}` }, timeout: 300000 }),
   ifNode('FB publicou?', pos(9, 1.5), '={{ $json.success === true && !$json.error }}'),
   panel('Registrar sucesso Facebook', pos(10, 1), 'result', resultBody('facebook', "status: 'published', externalId: $('FB: iniciar envio').item.json.video_id, url: 'https://www.facebook.com/reel/' + $('FB: iniciar envio').item.json.video_id")),

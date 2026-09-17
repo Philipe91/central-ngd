@@ -395,7 +395,7 @@
             "conditions": [
               {
                 "id": "c1",
-                "leftValue": "={{ !!$json.id && !$json.error }}",
+                "leftValue": "={{ !!($json.id || $json.uploadId) && !$json.error }}",
                 "rightValue": "",
                 "operator": {
                   "type": "boolean",
@@ -437,7 +437,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'published', externalId: $json.id, url: 'https://youtube.com/shorts/' + $json.id }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'published', externalId: ($json.id || $json.uploadId), url: 'https://youtube.com/shorts/' + ($json.id || $json.uploadId) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -581,7 +581,7 @@
         ],
         "parameters": {
           "method": "POST",
-          "url": "=https://rupload.facebook.com/video-reels/{{ $('FB: iniciar envio').item.json.video_id }}",
+          "url": "={{ $('FB: iniciar envio').item.json.upload_url || 'https://rupload.facebook.com/video-reels/' + $('FB: iniciar envio').item.json.video_id }}",
           "options": {
             "timeout": 900000,
             "response": {
