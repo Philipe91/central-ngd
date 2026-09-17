@@ -473,7 +473,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'youtube', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -773,7 +773,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'facebook', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -1187,7 +1187,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'instagram', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -1547,7 +1547,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('Dividir trabalhos').item.json.contentId, network: 'tiktok', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {

@@ -61,7 +61,7 @@ const readFile = (name, position, selector) => ({ id: slug(name), name, type: 'n
 const connect = (edges) => { const c = {}; for (const [from, to, output = 0] of edges) { c[from] ??= { main: [] }; while (c[from].main.length <= output) c[from].main.push([]); c[from].main[output].push({ node: to, type: 'main', index: 0 }); } return c; };
 const resultBody = (network, extra) => `={{ JSON.stringify({ contentId: ${JOB}.contentId, network: '${network}', ${extra} }) }}`;
 // Mensagem de falha legível: erro da plataforma, motivo do TikTok, estado do contêiner do Instagram ou, por último, o JSON bruto.
-const failBody = network => resultBody(network, `status: 'failed', error: String([$json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900)`);
+const failBody = network => resultBody(network, `status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como "Conta privada" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900)`);
 
 // ---------- 1. Verificar conexão do painel (mantido) ----------
 const health = { id: 'ngdLocalHealth01', name: 'NGD · Verificar conexão do painel', active: false, settings, nodes: [
