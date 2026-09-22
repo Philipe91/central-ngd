@@ -76,7 +76,7 @@ function corpo() {
   const kpis = [
     ['Produtos no catálogo', 'grid', total, pct(s.ativos ?? 0, total), '#109bf0', `${s.ativos ?? 0} ativos`],
     ['Com imagem pronta', 'image', s.comImagem ?? 0, pct(s.comImagem ?? 0, total), '#2ed47a', `${s.semImagem ?? 0} sem imagem`],
-    ['Contas de anúncio', 'megaphone', s.contas ?? 0, null, '', conectada ? `Meta: ${s.meta?.nome || s.meta?.conta || 'conectada'}` : 'nenhuma conectada ainda'],
+    ['Contas de anúncio', 'megaphone', s.contas ?? 0, null, '', conectada ? `Meta: ${s.meta?.nome || s.meta?.conta || 'conectada'}` : 'falta o token da Meta'],
     ['Leads registrados', 'users', leads, pct(qualificados, leads), '#885af8', `${qualificados} ${qualificados === 1 ? 'qualificado' : 'qualificados'}`],
   ];
   const abas = [['catalogo', 'Catálogo', dados.produtos.length], ['campanhas', 'Campanhas e links', dados.campanhas.length], ['leads', 'Leads', dados.leads.length]];
@@ -195,7 +195,7 @@ function cartao(p) {
       <div class="k-product-top"><span class="k-product-cat">${esc(p.category || 'Sem categoria')}</span><span class="k-badge ${ativo ? 'ok' : 'neutral'}">${ativo ? 'Ativo' : 'Inativo'}</span></div>
       <h3 class="k-product-name">${esc(p.name)}</h3>
       <p class="k-product-desc">${esc(p.description || 'Sem descrição.')}</p>
-      <div class="k-product-meta"><strong class="k-num">${p.price_cents != null ? brl(p.price_cents) : 'Sem preço'}</strong><span class="k-code">${esc(p.sku)}</span></div>
+      <div class="k-product-meta"><strong class="k-num">${p.price_cents != null ? brl(p.price_cents) : 'Sem preço'}</strong><span class="k-code" title="${esc(p.sku)}">${esc(p.sku)}</span></div>
     </div>
     <div class="k-product-foot">
       <button class="k-btn tertiary sm" type="button" data-ads-imagem="${p.id}">${icon('upload', { size: 16 })} ${quadrada ? 'Trocar imagem' : 'Enviar imagem'}</button>
