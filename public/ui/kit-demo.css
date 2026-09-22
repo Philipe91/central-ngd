@@ -1,0 +1,10 @@
+/* Só da vitrine (kit.html): grade de ícones e amostras de cor. */
+.k-icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.k-icon-grid figure{margin:0;padding:16px 8px 12px;border-radius:var(--k-radius);display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--k-nav)}
+.k-icon-grid figure:hover{background:var(--k-bg);color:var(--k-accent)}
+.k-icon-grid figcaption{font-size:11px;line-height:16px;color:var(--k-text-muted)}
+.k-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:24px}
+.k-swatches div{display:grid;grid-template-columns:1fr 1fr;gap:0 4px}
+.k-swatches i{height:44px;border-radius:var(--k-radius)}
+.k-swatches strong{grid-column:1/-1;margin-top:8px;font-size:13px;font-weight:500;color:var(--k-text)}
+.k-swatches span{grid-column:1/-1;font-size:11px;color:var(--k-text-muted)}

@@ -45,4 +45,39 @@ A cor já é do kit desde o commit `4de67d1`; o que denuncia é a estrutura:
 | branco sobre verde `#2ed47a` | 1,94 | etiqueta verde escurece |
 | branco sobre amarelo `#ffb946` | 1,71 | etiqueta amarela usa texto `#192a3e` (8,52) |
 
-A saída é manter a cor do kit como identidade (ícones, barras, gráficos, bordas) e ter um tom escurecido de cada uma para quando houver texto em cima. Os valores finais ficam na Etapa 1, com a tabela completa.
+A saída é manter a cor do kit como identidade (ícones, barras, gráficos, bordas) e ter um tom escurecido de cada uma para quando houver texto em cima.
+
+## Etapas 1 a 4: sistema visual e vitrine
+
+Arquivos novos, sem tocar no painel atual (index.html, app.js, ads.js, charts.js, style.css e theme.css seguem iguais):
+
+- `public/ui/kit.css`: cores com nome por função e componentes do kit, todos com prefixo `k-` (casca com menu de 256px e barra de busca de 60px, cartão com filtro "Mostrar: … ▾", cartão de item, faixa de dias, barra de progresso, etiqueta 84×22, botões, campo com linha embaixo, tabela de linha 64px, legenda de bolinha vazada, janela, aviso).
+- `public/ui/icons.js`: 41 ícones, 14 KB. Os do kit convertidos do `.penpot`; os que faltavam desenhados na mesma grade 20×20 e traço 1,4px. `icon(nome, {size, label})`.
+- `public/ui/charts.js`: área com degradê, linha, colunas com topo arredondado, barras horizontais, rosca de anel fino com número grande no centro, minigráfico e legenda. SVG puro, desenhado na largura real do cartão (o texto fica em 12px de verdade) e redesenhado se ela mudar; balão escuro que segue o mouse. Cores em atributos `fill`/`stroke`, que a CSP permite.
+- `public/kit.html` + `public/ui/kit-demo.js`: a vitrine. Abre em `http://127.0.0.1:3210/kit.html` e mostra Visão geral, Conteúdos, Resultados e Componentes com os dados reais de `/api/state`. Gráficos de tendência usam números de exemplo, com isso escrito na tela, porque a base ainda tem 3 conteúdos.
+
+Desvio do plano, de propósito: as cores novas ficaram no próprio `ui/kit.css`, e não em `theme.css`, para o painel atual não mudar enquanto a vitrine não é aprovada. `theme.css` e `style.css` saem na Etapa 8.
+
+### Contraste de todos os pares usados
+
+| Par | Cores | Razão | Mínimo |
+| --- | --- | --- | --- |
+| Título | #192a3e sobre branco | 14,56 | 4,5 |
+| Título de cartão e tabela | #323c47 sobre branco | 11,21 | 4,5 |
+| Menu e rótulos | #334d6e sobre branco | 8,65 | 4,5 |
+| Corpo e eixos | #4c5862 sobre branco | 7,29 | 4,5 |
+| Texto secundário | #707683 sobre branco | 4,56 | 4,5 |
+| Rótulo "Mostrar:" | #6a707e sobre branco | 4,96 | 4,5 |
+| Placeholder | #6b7788 sobre branco | 4,55 | 4,5 |
+| Link e item ativo | #0d7cc0 sobre branco | 4,51 | 4,5 |
+| Botão primário | branco sobre #0d7cc0 (hover #0b6fae: 5,39) | 4,51 | 4,5 |
+| Etiqueta Publicado | branco sobre #1d874d | 4,54 | 4,5 |
+| Etiqueta Com falha | branco sobre #c35248 | 4,54 | 4,5 |
+| Etiqueta Rascunho | #192a3e sobre #ffb946 | 8,52 | 4,5 |
+| Etiqueta Planejado | branco sobre #8457f1 | 4,55 | 4,5 |
+| Etiqueta Manual | #4c5862 sobre #ebeff2 | 6,31 | 4,5 |
+| Balão do gráfico | branco sobre #192a3e | 14,56 | 4,5 |
+| Filtros sobre o fundo | #334d6e sobre #f5f6f8 | 8,00 | 4,5 |
+| Linha de gráfico e ícone ativo | #109bf0 sobre branco | 3,01 | 3 (objeto gráfico) |
+
+O ícone inativo `#c2cfe0` (1,58) é decorativo: sempre vem com o nome do item ao lado. O azul `#109bf0` fica a uma unidade do `#109cf1` do kit, diferença que não se vê, mas que leva a linha de 2,98 para 3,01.
