@@ -112,9 +112,13 @@ try {
         estagio, orcado, ganho, ['venda', 'perdido'].includes(estagio) ? agora() : null,
         '[demo] cadastro de demonstração');
       inserirEvento.run(r.lastInsertRowid, criado, null, 'lead', 'Lead registrado');
+      // Cada passo cai um ou dois dias depois do anterior, sem passar de hoje. Carimbar
+      // tudo com a hora atual empilharia o funil inteiro no último dia do gráfico.
       let anterior = 'lead';
+      let quando = Date.parse(criado);
       for (const passo of CAMINHO[estagio]) {
-        inserirEvento.run(r.lastInsertRowid, agora(), anterior, passo, 'Mudança de demonstração');
+        quando = Math.min(quando + entre(1, 3) * 86400000, hoje.getTime());
+        inserirEvento.run(r.lastInsertRowid, new Date(quando).toISOString(), anterior, passo, 'Mudança de demonstração');
         anterior = passo;
       }
       n += 1;

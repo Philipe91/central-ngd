@@ -17,6 +17,21 @@ node automation/ads-demo.mjs --limpar   # remove só o que o script criou
 
 Tudo que ele cria é marcado: produto com código começando em `DEMO-`, campanha com identificador `demo:` e lead com observação `[demo]`. A limpeza apaga apenas isso, então cadastro real nunca é tocado. Os números são sorteados com semente fixa, então rodar duas vezes dá o mesmo resultado.
 
+## A aba Dashboard
+
+Primeira aba do módulo. Responde uma pergunta só: os anúncios estão trazendo lead, lead bom e pedido de orçamento?
+
+No topo ficam os filtros de período (7, 30 ou 90 dias, todo o período, ou um intervalo escolhido a dedo) e o de campanha. Trocar qualquer um dos dois refaz os indicadores, os gráficos e as tabelas juntos. O padrão é 30 dias e todas as campanhas.
+
+Duas contagens de tempo convivem na tela, e é importante não confundir:
+
+- **Evolução da captação** usa a data em que a coisa aconteceu. O lead entrou no dia 3 e foi qualificado no dia 7: ele aparece no dia 3 na linha de leads e no dia 7 na de qualificados. Serve para ver o ritmo.
+- **Funil dos leads** e **Resultados por campanha** usam os leads que nasceram no período e até onde cada um chegou até hoje. Serve para ver quanto daquela safra andou.
+
+Por isso os números das duas partes não batem, e somar os dois dá resultado errado. Passar o mouse no título de cada bloco mostra essa explicação.
+
+Quando os dados vierem do script de demonstração, a Dashboard avisa em faixa amarela no topo. Número fictício nunca se passa por resultado real.
+
 ## O ciclo do dia a dia
 
 1. **Catálogo**: cadastre o produto e envie a foto. O painel gera a versão 1080x1080 com fundo branco e guarda o original.

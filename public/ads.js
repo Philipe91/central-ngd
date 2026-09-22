@@ -12,6 +12,7 @@
 // estágio e valor do lead. Trocar a marcação sem manter isso quebra a tela.
 import { wire } from './ui/charts.js';
 import { icon } from './ui/icons.js';
+import { painelDashboard, abrirDashboard, dashboardEvento } from './ads-dashboard.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const brl = cents => (cents == null ? '' : (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
@@ -23,7 +24,7 @@ let ligado = false;
 let formAberto = false;
 let formLead = false;
 let formCampanha = false;
-let aba = 'catalogo';
+let aba = 'dashboard';
 
 async function api(url, options) {
   const r = await fetch(url, options);
@@ -42,6 +43,7 @@ async function carregar() {
   } catch (error) {
     dados = { ...dados, carregando: false, erro: error.message };
   }
+  if (aba === 'dashboard') abrirDashboard(desenhar);   // o resumo vem somado do servidor, em chamada própria
   desenhar();
 }
 
@@ -61,6 +63,7 @@ export function adsPage() {
 }
 
 const ACOES = {
+  dashboard: '',
   catalogo: `<button class="k-btn primary" type="button" data-ads-novo>${icon('plus', { size: 16 })} Novo produto</button>`,
   campanhas: `<button class="k-btn primary" type="button" data-ads-nova-campanha>${icon('plus', { size: 16 })} Nova campanha</button>`,
   leads: `<button class="k-btn primary" type="button" data-ads-novo-lead>${icon('plus', { size: 16 })} Registrar lead</button>`,
@@ -79,18 +82,20 @@ function corpo() {
     ['Contas de anúncio', 'megaphone', s.contas ?? 0, null, '', conectada ? `Meta: ${s.meta?.nome || s.meta?.conta || 'conectada'}` : 'falta o token da Meta'],
     ['Leads registrados', 'users', leads, pct(qualificados, leads), '#885af8', `${qualificados} ${qualificados === 1 ? 'qualificado' : 'qualificados'}`],
   ];
-  const abas = [['catalogo', 'Catálogo', dados.produtos.length], ['campanhas', 'Campanhas e links', dados.campanhas.length], ['leads', 'Leads', dados.leads.length]];
-  return `<section class="k-card k-kpis" aria-label="Resumo da mídia paga">${kpis.map(([rotulo, ic, valor, barra, cor, nota]) => `
+  const abas = [['dashboard', 'Dashboard', null], ['catalogo', 'Catálogo', dados.produtos.length], ['campanhas', 'Campanhas e links', dados.campanhas.length], ['leads', 'Leads', dados.leads.length]];
+  // Na Dashboard esses números operacionais saem de cena: lá o espaço principal é do
+  // desempenho dos anúncios, não da arrumação do catálogo.
+  return `${aba === 'dashboard' ? '' : `<section class="k-card k-kpis" aria-label="Resumo da mídia paga">${kpis.map(([rotulo, ic, valor, barra, cor, nota]) => `
       <div class="k-kpi"><span class="k-kpi-label">${icon(ic, { size: 16 })}${rotulo}</span>
         <strong class="k-num">${valor}</strong>
         ${barra === null ? `<span class="k-badge ${conectada ? 'ok' : 'neutral'}">${conectada ? 'Conectada' : 'Não conectada'}</span>`
           : `<div class="k-progress sm" role="img" aria-label="${barra}%"><i data-w="${barra}" data-c="${cor}"></i></div>`}
         <small>${esc(nota)}</small></div>`).join('')}
-    </section>
+    </section>`}
     <div class="k-notice">${icon('info', { size: 20 })}<p><strong>Somente leitura: este módulo não gasta dinheiro.</strong> O painel não cria, não pausa e não altera campanha, e o código que faria isso não existe. Aqui você organiza os produtos, gera as imagens quadradas, cria os links rastreados e registra os leads.</p></div>
     <div class="k-pagebar"><div class="k-tabs" role="tablist" aria-label="Seções da mídia paga">${abas.map(([id, rotulo, n]) =>
-      `<button type="button" role="tab" aria-selected="${aba === id}" data-ads-aba="${id}">${rotulo}<span class="k-tab-count">${n}</span></button>`).join('')}</div>${ACOES[aba]}</div>
-    ${aba === 'catalogo' ? painelCatalogo() : aba === 'campanhas' ? painelCampanhas() : painelLeads()}`;
+      `<button type="button" role="tab" aria-selected="${aba === id}" data-ads-aba="${id}">${rotulo}${n === null ? '' : `<span class="k-tab-count">${n}</span>`}</button>`).join('')}</div>${ACOES[aba]}</div>
+    ${aba === 'dashboard' ? painelDashboard() : aba === 'catalogo' ? painelCatalogo() : aba === 'campanhas' ? painelCampanhas() : painelLeads()}`;
 }
 
 const campo = (rotulo, input, dica = '') => `<label class="k-field"><span>${rotulo}</span>${input}${dica ? `<small class="k-hint">${dica}</small>` : ''}</label>`;
@@ -235,7 +240,12 @@ function ligar() {
     const d = alvo.dataset;
     if (alvo.hasAttribute('data-ads-novo')) { formAberto = true; desenhar(); $('#ads-form')?.elements.name.focus(); }
     if (alvo.hasAttribute('data-ads-cancelar')) { formAberto = false; desenhar(); }
-    if (d.adsAba) { aba = d.adsAba; formAberto = false; formLead = false; desenhar(); }
+    if (dashboardEvento(alvo, desenhar)) return;
+    if (d.adsAba) {
+      aba = d.adsAba; formAberto = false; formLead = false; formCampanha = false;
+      if (aba === 'dashboard') abrirDashboard(desenhar);
+      desenhar();
+    }
     if (alvo.hasAttribute('data-ads-novo-lead')) { formLead = true; desenhar(); $('#ads-lead-form')?.elements.contact_name.focus(); }
     if (alvo.hasAttribute('data-ads-cancelar-lead')) { formLead = false; desenhar(); }
     if (d.adsCopiar) {
@@ -266,6 +276,7 @@ function ligar() {
   // a página e atrapalha quem usa teclado. Não há campo de dinheiro aqui: o anúncio é
   // medido por lead, qualificação e orçamento, e o valor fechado é assunto do comercial.
   main.addEventListener('change', async e => {
+    if (dashboardEvento(e.target, desenhar)) return;
     const id = e.target.dataset?.adsEstagio;
     if (!id) return;
     const stage = e.target.value;

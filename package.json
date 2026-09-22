@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.mjs",
-    "check": "node --check server.mjs && node --check public/app.js && node --check public/ads.js && node --check public/charts.js",
+    "check": "node --check server.mjs && node --check public/app.js && node --check public/ads.js && node --check public/ads-dashboard.js && node --check public/ui/charts.js",
     "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.mjs"
   },
   "dependencies": {
