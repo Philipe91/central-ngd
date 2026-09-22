@@ -56,7 +56,14 @@ const CAMPANHAS = [
 ];
 
 const NOMES = ['Marcos Vieira', 'Paula Andrade', 'Rede Bom Preço', 'Agência Ponto', 'Fazenda Sete Lagoas', 'Camila Prado', 'Distribuidora Sul', 'Eduardo Lima', 'Supermercados Kiru', 'Studio Rosa', 'Construtora Aval', 'Feira Brasil Agro'];
-const ESTAGIOS = [['lead', 4], ['contato', 2], ['qualificado', 2], ['orcamento', 2], ['proposta', 1], ['venda', 3], ['perdido', 2]];
+// Formato de funil de captação: muita gente entra, parte vira conversa, uma fatia pede
+// orçamento. O anúncio não vende, então o fim da fila é pequeno de propósito.
+const ESTAGIOS = [['lead', 5], ['contato', 3], ['qualificado', 3], ['orcamento', 2], ['proposta', 1], ['venda', 1], ['perdido', 1]];
+// Caminho percorrido até cada estágio, para o histórico refletir o funil real. Quem se
+// perdeu tinha sido qualificado antes, senão o lead sumiria da conta de qualificados.
+const CAMINHO = { lead: [], contato: ['contato'], qualificado: ['contato', 'qualificado'],
+  orcamento: ['contato', 'qualificado', 'orcamento'], proposta: ['contato', 'qualificado', 'orcamento', 'proposta'],
+  venda: ['contato', 'qualificado', 'orcamento', 'proposta', 'venda'], perdido: ['contato', 'qualificado', 'perdido'] };
 
 // Rodar de novo não pode duplicar lead: produtos e campanhas têm chave única, leads não.
 // Então a demonstração é sempre refeita do zero.
@@ -105,7 +112,11 @@ try {
         estagio, orcado, ganho, ['venda', 'perdido'].includes(estagio) ? agora() : null,
         '[demo] cadastro de demonstração');
       inserirEvento.run(r.lastInsertRowid, criado, null, 'lead', 'Lead registrado');
-      if (estagio !== 'lead') inserirEvento.run(r.lastInsertRowid, agora(), 'lead', estagio, 'Mudança de demonstração');
+      let anterior = 'lead';
+      for (const passo of CAMINHO[estagio]) {
+        inserirEvento.run(r.lastInsertRowid, agora(), anterior, passo, 'Mudança de demonstração');
+        anterior = passo;
+      }
       n += 1;
     }
   }

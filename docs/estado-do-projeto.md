@@ -83,7 +83,8 @@ Armadilhas já descobertas na prática, que devem ser respeitadas:
 
 **Etapa 2, pronta**:
 - Campanhas com **código de referência** (`MP-001`). O painel gera o link do site com UTMs e um link `wa.me` com mensagem pronta terminando em `[ref MP-001]`.
-- Leads com estágios (`lead`, `contato`, `qualificado`, `orcamento`, `proposta`, `venda`, `perdido`), histórico de mudanças e valores.
+- Leads com estágios (`lead`, `contato`, `qualificado`, `orcamento`, `proposta`, `venda` exibido como "Fechado", `perdido`) e histórico de mudanças.
+- **Medida por captação, não por venda**: o anúncio da NGD gera contato e pedido de orçamento, então o painel mostra leads, qualificados, orçamentos, propostas, investimento e o custo de cada etapa. Valor de venda, receita e ROAS ficam fora da tela. As colunas `quoted_cents`, `won_cents` e `closed_at` continuam no banco, intocadas, para uma etapa futura de análise comercial.
 - **Duas verdades separadas**: o que a plataforma atribui e o que a loja observou, lado a lado, nunca somadas.
 - Cliente da Meta **somente leitura**, com paginação, token mascarado e sincronização idempotente por (campanha, dia). Existe teste que falha se alguém colocar POST, PUT ou DELETE nesse arquivo.
 

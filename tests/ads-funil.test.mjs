@@ -39,22 +39,30 @@ test('funil: código de referência, links prontos e passagem por estágios', ()
   assert.equal(lead.events.length, 1);
 
   assert.throws(() => funil.moverEstagio(db, lead.id, { stage: 'inventado' }), /inválido/i);
-  assert.throws(() => funil.moverEstagio(db, lead.id, { stage: 'venda' }), /valor da venda/i);
+  // Fechar não exige valor: o anúncio é medido por lead e orçamento, não por venda.
+  assert.equal(funil.ROTULOS.venda, 'Fechado');
 
   funil.moverEstagio(db, lead.id, { stage: 'qualificado', note: 'quer 200 displays' });
   const orcado = funil.moverEstagio(db, lead.id, { stage: 'orcamento', value: '4.500,00' });
-  assert.equal(orcado.quoted_cents, 450000);
-  const vendido = funil.moverEstagio(db, lead.id, { stage: 'venda', value: '4.200,00' });
-  assert.equal(vendido.won_cents, 420000);
-  assert.ok(vendido.closed_at, 'venda tem de registrar a data de fechamento');
-  assert.equal(vendido.events.length, 4);   // registro + três mudanças
+  assert.equal(orcado.quoted_cents, 450000, 'o valor orçado continua guardado no banco');
+  const fechado = funil.moverEstagio(db, lead.id, { stage: 'venda' });
+  assert.ok(fechado.closed_at, 'fechamento tem de registrar a data');
+  assert.equal(fechado.events.length, 4);   // registro + três mudanças
 
   const v = funil.duasVerdades(db);
   assert.equal(v.ngd.leads, 1);
-  assert.equal(v.ngd.vendas, 1);
-  assert.equal(v.ngd.receita_cents, 420000);
+  assert.equal(v.ngd.qualificados, 1);
+  assert.equal(v.ngd.orcamentos, 1);
+  assert.equal(v.ngd.propostas, 1, 'quem fechou passou pela proposta, mesmo sem o clique da etapa');
   assert.equal(v.plataforma.gasto, 0);
-  assert.equal(v.custos.cac, null, 'sem gasto não existe custo por cliente');
+  assert.equal(v.custos.cpo_ngd, null, 'sem gasto não existe custo por orçamento');
+  assert.equal(v.ngd.receita_cents, undefined, 'receita não é exposta no MVP');
+
+  // A campanha passa a ser lida por qualificação, não por venda.
+  const campanha = funil.listarCampanhas(db).find(c => c.ref_code === 'MP-001');
+  assert.equal(campanha.qualificados, 1);
+  assert.equal(campanha.orcamentos, 1);
+  assert.equal(campanha.vendas, undefined);
   db.close();
 });
 
@@ -127,6 +135,14 @@ test('duas verdades: números da plataforma e da NGD não se misturam', () => {
   assert.equal(v.custos.cpl_plataforma, 2500);   // R$ 25,00
   assert.equal(v.custos.cpl_ngd, 10000);         // R$ 100,00
   assert.equal(v.custos.cpql_ngd, 20000);        // R$ 200,00
-  assert.equal(v.custos.roas, 0, 'gastou e não vendeu: retorno zero, que é diferente de desconhecido');
+  assert.equal(v.ngd.orcamentos, 0, 'ninguém pediu orçamento ainda');
+  assert.equal(v.custos.cpo_ngd, null, 'gastou e ninguém pediu orçamento: custo indefinido, não zero');
+
+  // Quem avança continua contado nas etapas por onde passou.
+  funil.moverEstagio(db, l1.id, { stage: 'orcamento' });
+  const depois = funil.duasVerdades(db);
+  assert.equal(depois.ngd.qualificados, 1, 'virou orçamento e segue contando como qualificado');
+  assert.equal(depois.ngd.orcamentos, 1);
+  assert.equal(depois.custos.cpo_ngd, 20000);
   db.close();
 });

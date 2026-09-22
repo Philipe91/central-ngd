@@ -22,8 +22,10 @@ Tudo que ele cria é marcado: produto com código começando em `DEMO-`, campanh
 1. **Catálogo**: cadastre o produto e envie a foto. O painel gera a versão 1080x1080 com fundo branco e guarda o original.
 2. **Campanhas e links**: crie a campanha e copie os dois links. Use o link de WhatsApp no botão do anúncio e o link do site quando a pessoa for para a loja.
 3. Monte o anúncio no Gerenciador da Meta usando a imagem quadrada e o link copiado. O painel não cria anúncio.
-4. **Leads**: quando alguém chamar, registre com o código que veio na mensagem, no formato `[ref MP-001]`. Vá mudando o estágio conforme a conversa anda e preencha o valor quando virar orçamento ou venda.
+4. **Leads**: quando alguém chamar, registre com o código que veio na mensagem, no formato `[ref MP-001]`. Vá mudando o estágio conforme a conversa anda: Novo lead, Contato iniciado, Qualificado, Orçamento pedido, Proposta enviada, Fechado ou Perdido.
 5. A tela de leads mostra lado a lado o que a Meta atribui e o que a NGD observou.
+
+O anúncio da NGD não vende sozinho: ele capta contato e gera pedido de orçamento. Por isso o painel mede leads, leads qualificados, pedidos de orçamento, propostas e o custo de cada um deles. Valor de venda e receita não aparecem na tela. O estágio "Fechado" existe e não pede valor nenhum.
 
 ## Conectar a Meta (quando houver token)
 
@@ -36,5 +38,6 @@ O banco fica em `data/ads.sqlite`, fora do git, só neste computador. A rota de 
 ## Limites conhecidos
 
 - Sem gasto registrado, os indicadores de custo aparecem como traço, não como zero.
+- Quem avança continua contado nas etapas por onde passou: um lead que virou orçamento segue somando na conta de qualificados.
 - Lead sem código de referência entra no total da NGD, mas não é ligado a nenhuma campanha.
 - O número da plataforma e o da NGD contam coisas diferentes e nunca devem ser somados.
