@@ -138,3 +138,5 @@ code{background:#f2f4f7;color:var(--ink-2);font-size:11px}
 .ads-form{padding:22px;border-bottom:1px solid var(--line);background:#fbfcfd}
 .ads-form .dialog-actions{margin-top:4px}
 .ads-grid .card-bottom .actions{flex-wrap:wrap;gap:6px}
+.valor-lead{width:110px;margin-top:0;padding:6px 8px;font-size:12px}
+.table select{margin-top:0;padding:6px 8px;font-size:12px;max-width:170px}
