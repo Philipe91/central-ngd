@@ -1,0 +1,132 @@
+/* Tema do painel, baseado no SaaS Dashboard UI Kit do Penpot Hub (autor "SaaS Design").
+   Os valores abaixo foram extraídos do próprio arquivo .penpot do kit: 24 cores e a
+   escala tipográfica em Poppins.
+
+   Carregado DEPOIS de style.css: só redefine tokens e ajusta componentes, sem reescrever
+   a folha original. Para voltar ao visual anterior, basta remover o <link> do index.html.
+
+   Poppins está embutida em public/fonts (SIL Open Font License 1.1, livre para redistribuir),
+   porque o painel roda sem internet e fonte por CDN quebraria offline. */
+
+@font-face{font-family:Poppins;src:url('/fonts/poppins-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:Poppins;src:url('/fonts/poppins-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:Poppins;src:url('/fonts/poppins-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+
+:root{
+  font-family:Poppins,'Segoe UI',Arial,sans-serif;
+  /* cores do kit */
+  --ink:#192a3e;          /* Black */
+  --ink-2:#323c47;
+  --muted:#90a0b7;        /* Gray */
+  --muted-2:#707683;
+  --line:#ebeff2;         /* Divider */
+  --line-2:#d3d8dd;       /* Line */
+  --bg:#f5f6f8;           /* background */
+  --blue:#109cf1;         /* Default */
+  --blue-hover:#34aff9;
+  --blue-pressed:#098edf;
+  --green:#2ed47a;
+  --yellow:#ffb946;
+  --red:#f7685b;
+  --red-strong:#ff3c5f;
+  --purple:#885af8;
+  --gray-icon:#c2cfe0;
+  --dark-blue:#334d6e;
+  --checked-bg:#f2f9ff;
+  /* as três cores da marca NGD seguem só na assinatura do logo */
+  --cyan:#00b5d2;--pink:#da3f83;
+  --shadow:0 1px 3px rgba(25,42,62,.05),0 4px 14px rgba(25,42,62,.04);
+  color:var(--ink);
+  background:var(--bg);
+  letter-spacing:.1px;
+}
+body{font-size:13px;line-height:20px;background:var(--bg);color:var(--ink)}
+
+/* --- tipografia do kit: H1 20/30, H2 18/28, H3 15/23, corpo 13/20, botão 13/20 semibold --- */
+.page-heading h1{font-size:20px;line-height:30px;font-weight:500;letter-spacing:.1px;margin:6px 0}
+.page-heading p{font-size:13px;line-height:20px;color:var(--muted-2)}
+.eyebrow{font-size:10px;line-height:16px;letter-spacing:.2px;font-weight:500;color:var(--muted);text-transform:uppercase}
+.panel h2{font-size:15px;line-height:23px;font-weight:500;letter-spacing:.1px}
+.panel-head p,.panel-head>div>p{font-size:12px;line-height:18px;color:var(--muted)}
+.button{font-size:13px;line-height:20px;font-weight:600;letter-spacing:.1px;border-radius:4px;min-height:38px;padding:9px 16px}
+.button.small{font-size:12px;min-height:32px;padding:6px 12px;border-radius:4px}
+.text-button{font-size:13px;font-weight:600;color:var(--blue)}
+nav a{font-size:13px;line-height:20px;font-weight:500;border-radius:4px;color:var(--muted-2)}
+nav a.active{color:var(--blue);background:var(--checked-bg)}
+nav a:hover{background:#f7f9fb}
+.nav-label{font-size:10px;letter-spacing:.2px;color:var(--muted);text-transform:uppercase}
+label{font-size:12px;line-height:18px;font-weight:500;color:var(--ink-2)}
+input:not([type=checkbox]):not([type=file]),textarea,select{font-size:13px;border-radius:4px;border-color:var(--line-2);color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--muted);font-size:12px}
+.search{font-size:13px;border-radius:4px;border-color:var(--line-2)}
+.help-box,.notice{font-size:12px;line-height:20px;color:var(--muted-2)}
+
+/* --- superfícies: sombra suave no lugar de borda pesada --- */
+.panel,.metric,.network-card{border-color:var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.panel-head{border-color:var(--line);padding:18px 22px}
+.sidebar{border-color:var(--line)}
+.topbar{border-color:var(--line);height:64px;font-size:13px}
+.workspace{border-color:var(--line);border-radius:6px;font-size:13px}
+.local-pill{border-color:var(--line);border-radius:4px;font-size:11px}
+.icon-button{border-color:var(--line-2);border-radius:4px}
+footer{border-color:var(--line);font-size:11px;color:var(--muted)}
+
+/* --- cores de estado, vindas do kit --- */
+.primary{background:var(--blue);box-shadow:0 2px 6px rgba(16,156,241,.25)}
+.primary:hover{background:var(--blue-hover)}
+.primary:active{background:var(--blue-pressed)}
+.secondary{border-color:var(--line-2);color:var(--ink-2)}
+.secondary:hover{background:#f7f9fb}
+.badge{border-radius:4px;font-size:11px;font-weight:500;background:#f2f4f7;color:var(--muted-2)}
+.badge.green{background:rgba(46,212,122,.12);color:#1f9d59}
+.badge.red{background:rgba(247,104,91,.12);color:#d0453a}
+.badge.amber{background:rgba(255,185,70,.16);color:#b97c0c}
+.badge.blue{background:var(--checked-bg);color:var(--blue)}
+.error{color:var(--red-strong)}
+.setup-banner{border-color:#cfe8fb;background:var(--checked-bg);border-radius:8px}
+.setup-banner>svg{color:var(--blue)}
+.setup-banner p{color:var(--muted-2);font-size:12px}
+.setup-banner.warn{border-color:#f6e2b8;background:#fff8ec}
+.setup-banner.warn>svg{color:var(--yellow)}
+svg{color:var(--gray-icon)}
+nav a svg,.text-button svg,.setup-banner>svg{color:inherit}
+
+/* --- números e tabelas: tabular para as colunas ficarem alinhadas --- */
+.metric strong{font-size:28px;line-height:36px;font-weight:600;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.metric-head{font-size:12px;color:var(--muted-2)}
+.metric small{font-size:11px;color:var(--muted)}
+.table{font-size:13px}
+.table th{font-size:10px;letter-spacing:.2px;color:var(--muted);text-transform:uppercase;border-color:var(--line)}
+.table td{border-color:var(--line);font-variant-numeric:tabular-nums}
+.table a{color:var(--blue);font-weight:500}
+.donut-total{font-variant-numeric:tabular-nums}
+.chart-legend .legend-value{font-variant-numeric:tabular-nums}
+.chart-legend .legend-value em{background:#f2f4f7;color:var(--muted-2)}
+
+/* --- cartões de conteúdo, calendário e diálogos --- */
+.content-card{border-color:var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.card-body h3{font-size:15px;line-height:23px;font-weight:500}
+.card-body p,.card-meta{font-size:12px;color:var(--muted-2)}
+.chip{border-color:var(--line-2);border-radius:4px;font-size:11px}
+.filter{font-size:13px;border-radius:4px;color:var(--muted-2)}
+.filter.active{background:#fff;border-color:var(--line-2);color:var(--ink)}
+.day{border-color:var(--line);font-size:11px}
+.weekday{border-color:var(--line);font-size:10px;letter-spacing:.2px;text-transform:uppercase;color:var(--muted)}
+.day.today>span{background:var(--blue)}
+.calendar-event{background:var(--checked-bg);border-left-color:var(--blue);color:#0b7ec4;border-radius:3px;font-size:10px}
+.calendar-event.published{background:rgba(46,212,122,.12);border-left-color:var(--green);color:#1f9d59}
+.calendar-event.attention{background:rgba(247,104,91,.12);border-left-color:var(--red);color:#d0453a}
+.check-circle.done{background:rgba(46,212,122,.12);color:#1f9d59;border-color:rgba(46,212,122,.3)}
+.activity-row{border-color:var(--line);font-size:12px}
+.network-row{border-color:#f4f6f9}
+.network-info strong{font-size:13px}
+.network-info small{font-size:11px;color:var(--muted)}
+dialog{border-color:var(--line);border-radius:10px}
+.dialog-head h2{font-size:18px;line-height:28px;font-weight:500}
+.empty h3{font-size:15px;font-weight:500}
+.empty p{font-size:12px;color:var(--muted-2)}
+.upload-zone{border-color:#a9d6f6;background:var(--checked-bg);border-radius:6px}
+.upload-symbol{color:var(--blue)}
+.guide summary,.texts-details summary{color:var(--blue);font-size:12px}
+.guide ol{font-size:12px;color:var(--muted-2)}
+code{background:#f2f4f7;color:var(--ink-2);font-size:11px}

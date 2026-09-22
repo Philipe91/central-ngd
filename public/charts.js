@@ -15,8 +15,8 @@ export const NETWORK_COLORS = {
   facebook: '#3378dd',
   linkedin: '#3374a1',
 };
-// Paleta da marca NGD, para séries que não são "rede".
-export const SERIES_COLORS = ['#1663d7', '#00b5d2', '#da3f83', '#efc646', '#4a8f79'];
+// Cores de série do SaaS Dashboard UI Kit, para gráficos que não separam por rede.
+export const SERIES_COLORS = ['#109cf1', '#2ed47a', '#ffb946', '#885af8', '#f7685b'];
 
 const nf = new Intl.NumberFormat('pt-BR');
 export const fmt = value => nf.format(Math.round(Number(value) || 0));
