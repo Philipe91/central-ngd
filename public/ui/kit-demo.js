@@ -44,7 +44,7 @@ function shell(body) {
   }).join('');
   return `<aside class="k-side" aria-label="Menu principal">
     <div class="k-logo">NGD <small>Central de conteúdo</small></div>
-    <div class="k-profile"><span class="k-avatar">${initials(s.name)}</span><div><strong>${esc(s.name || 'NGD Núcleo Gráfico')}</strong><span>@${esc(s.instagram || 'nucleograficodigital')}</span></div></div>
+    <div class="k-profile"><span class="k-avatar">${initials(s.name)}</span><div><strong title="${esc(s.name || '')}">${esc(s.name || 'NGD Núcleo Gráfico')}</strong><span>@${esc(s.instagram || 'nucleograficodigital')}</span></div></div>
     <nav class="k-nav">${nav}</nav>
     <div class="k-side-divider"></div>
     <nav class="k-nav k-nav-2"><a href="#components"${view === 'components' ? ' aria-current="page"' : ''}>${icon('settings')}<span>Componentes do kit</span></a></nav>
@@ -71,10 +71,10 @@ function overview() {
   return `<div class="k-pagebar"><div class="k-filters">${show('Período', 'Esta semana')}${show('Rede', 'Todas')}</div><div class="k-actions"><button class="k-btn secondary" type="button">${icon('download', { size: 16 })} Importar do Instagram</button><button class="k-btn primary" type="button">${icon('plus', { size: 16 })} Novo conteúdo</button></div></div>
   <div class="k-grid cols-dash">
     <section class="k-card" aria-labelledby="t-week">
-      <div class="k-card-body">
+      <div class="k-card-body summary">
         <div class="k-row-between"><p class="k-progress-label" id="t-week">${done} ${done === 1 ? 'conteúdo' : 'conteúdos'} <em>publicado${done === 1 ? '' : 's'}</em> de ${c.length}</p>${show('Mostrar', 'Esta semana')}</div>
         <div class="k-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Publicados"><i data-w="${pct}"></i></div>
-        <p class="k-date k-mt-32">${now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}, <span>${now.toLocaleDateString('pt-BR', { weekday: 'long' })}</span></p>
+        <p class="k-date">${now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}, <span>${now.toLocaleDateString('pt-BR', { weekday: 'long' })}</span></p>
         <div class="k-days">${week.map(d => `<button type="button" class="${hasOn(d) ? 'has' : ''}"${d.toDateString() === now.toDateString() ? ' aria-current="date"' : ''}>${d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}<b>${d.getDate()}</b></button>`).join('')}</div>
       </div>
       <div class="k-divider"></div>
