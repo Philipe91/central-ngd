@@ -13,7 +13,7 @@ const share = shareApp.listen(0, '127.0.0.1');
 await Promise.all([server, share].map(s => new Promise(resolve => s.once('listening', resolve))));
 const base = `http://127.0.0.1:${server.address().port}`;
 const shareBase = `http://127.0.0.1:${share.address().port}`;
-after(async () => { await Promise.all([server, share].map(s => new Promise(resolve => s.close(resolve)))); fs.rmSync(temporary, { recursive: true, force: true }); });
+after(async () => { await Promise.all([server, share].map(s => new Promise(resolve => s.close(resolve)))); app.locals.adsRouter?.fechar(); fs.rmSync(temporary, { recursive: true, force: true }); });
 const request = async (url, options) => { const response = await fetch(base + url, options); return { status: response.status, body: await response.json() }; };
 const json = (method, body, headers = {}) => ({ method, headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
 const token = 'test-local-bridge-token';

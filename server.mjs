@@ -8,6 +8,7 @@ import { createStore, NETWORKS } from './lib/store.mjs';
 import { AUTOMATED, claimJobs, applyResult, applyMetrics, jobsSnapshot, expireStuck, syncStatus, textFor } from './lib/queue.mjs';
 import * as media from './lib/media.mjs';
 import { createTikTokAuth } from './lib/tiktok-auth.mjs';
+import { criarRotasAds } from './lib/ads/routes.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = process.env.NGD_DATA_DIR || path.join(root, 'data');
@@ -292,6 +293,10 @@ app.get('/api/n8n/status', async (req, res) => {
   res.json({ online, connected, mode: store.db.automation?.mode || 'idle', lastCheck: store.db.automation?.checkedAt || null, jobs, tunnel: media.tunnelStatus() });
 });
 app.get('/api/export', (req, res) => { res.attachment('ngd-planejamento.json').json(store.db); });
+// Mídia Paga: módulo separado, com banco próprio (data/ads.sqlite). Não usa o dashboard.json.
+const adsRouter = criarRotasAds(dataDir);
+app.locals.adsRouter = adsRouter;
+app.use('/api/ads', adsRouter);
 app.use('/media/prepared', express.static(renditionDir, { dotfiles: 'deny', index: false }));
 app.use('/media', express.static(uploadDir, { dotfiles: 'deny', index: false }));
 app.use(express.static(path.join(root, 'public')));
