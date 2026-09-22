@@ -3,3 +3,55 @@
 .badge.green{background:#e6f5ee;color:#2f7a5d}.badge.red{background:#fdecec;color:#b53b48}.setup-banner.warn{border-color:#f3dcb0;background:#fff8e8}.setup-banner.warn>svg{color:#a87621}code{font-family:Consolas,monospace;font-size:12px;background:#f0f3f7;padding:1px 5px;border-radius:4px}.actions.small{gap:6px}.card-thumb{width:100%;height:180px;object-fit:cover;background:#172b40;display:block}.card-thumb.placeholder{display:grid;place-items:center;color:#7397c7}.card-thumb.placeholder svg{width:34px;height:34px}.card-badges{display:flex;gap:6px;flex-wrap:wrap}.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px 4px 4px;font-size:12px;color:var(--ink);background:#fff}.chip .network-icon{width:22px;height:22px;font-size:11px;border-radius:5px}.chip em{font-style:normal;font-size:11px;padding:2px 6px;border-radius:4px;background:#f2f4f7;color:#7a8796}.chip em.green{background:#e6f5ee;color:#2f7a5d}.chip em.red{background:#fdecec;color:#b53b48}.chip em.amber{background:#fff5e2;color:#a87621}.chip em.blue{background:#edf3ff;color:#4d78b9}a.chip:hover{border-color:#98bcef}.card-bottom .actions{gap:6px;justify-content:flex-end}.card-bottom .icon-button{width:30px;height:30px;font-size:18px}.warn-text{color:#a87621}.conn-info{font-size:13px;margin:-8px 0 16px;color:var(--muted)}.conn-info small{font-size:12px}.guide{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}.guide summary{cursor:pointer;font-size:13px;font-weight:650;color:var(--blue)}.guide ol{margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.7;color:#4b5d72}.guide li{margin-bottom:6px}.network-card select{width:100%;border:1px solid #d9e1eb;background:#fff;border-radius:6px;padding:11px 12px;color:var(--ink);margin-top:8px}.table-wrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:13px}.table th{text-align:left;font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:650;padding:12px 18px;border-bottom:1px solid var(--line);white-space:nowrap}.table td{padding:12px 18px;border-bottom:1px solid #f0f2f6;vertical-align:middle}.table tr:last-child td{border-bottom:0}.table td.detail{max-width:320px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}.table a{color:var(--blue)}.texts-details{margin-bottom:18px}.texts-details summary{font-size:13px;font-weight:650;color:var(--blue);cursor:pointer;margin-bottom:8px}.texts-details label{font-size:13px}.texts-details textarea{margin-top:4px}.manual-steps{padding-left:20px;font-size:13px;line-height:1.8;margin:0 0 16px}.manual-steps li{margin-bottom:10px}.manual-steps label{margin-bottom:8px}#manual-text{font-size:13px}.calendar-event.published{border-left-color:#38876c;background:#e9f5f0;color:#2f7a5d}.calendar-event.attention{border-left-color:#b53b48;background:#fdecec;color:#b53b48}.page-heading .actions{gap:8px}
 @media(max-width:760px){.page-heading .actions{flex-direction:column;align-items:stretch}.card-bottom{flex-direction:column;align-items:stretch;gap:10px}.card-bottom .actions{justify-content:flex-start}}
 .tiktok-auth{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}.tiktok-auth .conn-info{margin:0 0 14px}#tiktok-redirect{display:inline-block;margin:6px 0;overflow-wrap:anywhere}
+
+/* Gráficos da aba Resultados: SVG próprio, sem biblioteca, usando a paleta da marca. */
+.chart-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:23px;margin-bottom:23px}
+.chart-body{padding:23px}
+.panel-head>div>p{font-size:12px;color:var(--muted);margin:6px 0 0}
+.metric.accent{position:relative;overflow:hidden}
+.metric.accent::before{content:"";position:absolute;top:0;bottom:0;left:0;width:4px;background:var(--accent,var(--blue))}
+.metric.accent .metric-head svg{color:var(--accent,#91a0b1)}
+.chart-donut{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.chart-donut svg{flex-shrink:0}
+.donut-total{font-size:26px;font-weight:700;fill:var(--ink);letter-spacing:-1px}
+.donut-caption{font-size:11px;fill:var(--muted)}
+.chart-legend{list-style:none;margin:0;padding:0;flex:1;min-width:168px;display:grid;gap:12px}
+.chart-legend li{display:flex;align-items:center;gap:9px;font-size:13px}
+.chart-legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.chart-legend .legend-name{color:#4b5d72}
+.chart-legend .legend-value{margin-left:auto;font-weight:650;display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+.chart-legend .legend-value em{font-style:normal;font-size:11px;color:var(--muted);background:#f2f5f9;padding:2px 6px;border-radius:4px}
+.chart-legend.inline{display:flex;flex-wrap:wrap;gap:15px;min-width:0}
+.chart-legend.inline li{font-size:12px;color:var(--muted)}
+.chart-bars{list-style:none;margin:0;padding:0;display:grid;gap:17px}
+.chart-bars .bar-head{display:flex;align-items:center;gap:12px;margin-bottom:7px;font-size:13px}
+.chart-bars .bar-label{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}
+.chart-bars .bar-label .network-icon{width:22px;height:22px;font-size:11px;border-radius:5px;flex-shrink:0}
+.chart-bars strong{margin-left:auto;font-size:14px;white-space:nowrap}
+.chart-bars strong em{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
+.chart-bars .bar-track{height:10px;background:#eef1f6;border-radius:5px;overflow:hidden}
+.chart-bars .bar-fill{height:100%;border-radius:5px}
+.chart-bars small{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.chart-grouped{display:flex;align-items:flex-end;gap:22px;justify-content:space-around;min-height:186px}
+.chart-grouped .group{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:13px}
+.chart-grouped .group-plot{display:flex;align-items:flex-end;gap:7px;height:140px;width:100%;justify-content:center}
+.chart-grouped .group-bar{width:22px;height:100%;display:flex;align-items:flex-end}
+.chart-grouped .group-fill{width:100%;border-radius:4px 4px 0 0;min-height:3px}
+.chart-grouped .group-label{display:flex;align-items:center;gap:7px;font-size:12px;color:#4b5d72;font-weight:550}
+.chart-grouped .group-label .network-icon{width:22px;height:22px;font-size:11px;border-radius:5px}
+.chart-empty{display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 0;color:var(--muted);font-size:13px}
+.chart-empty p{margin:0}
+.cell-net{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.cell-net .network-icon{width:24px;height:24px;font-size:11px;border-radius:6px}
+@media(prefers-reduced-motion:no-preference){
+.donut-arc{animation:arcIn .5s ease-out both;animation-delay:var(--delay,0ms)}
+@keyframes arcIn{from{opacity:0}to{opacity:1}}
+.chart-bars li,.chart-grouped .group{animation:riseIn .45s ease-out both;animation-delay:var(--delay,0ms)}
+@keyframes riseIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+}
+@media(max-width:1150px){.chart-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.chart-body{padding:18px}.chart-donut{gap:18px;justify-content:center}.chart-legend{min-width:100%}.chart-grouped{gap:10px;min-height:156px}.chart-grouped .group-plot{height:112px}.chart-grouped .group-bar{width:15px}}
+/* A regra global de svg (20px, fill:none, stroke) vale para os ícones; a rosca precisa escapar dela. */
+.chart .donut-svg{width:var(--donut-size,168px);height:var(--donut-size,168px);stroke:none;fill:none;flex-shrink:0}
+.chart .donut-svg text{fill:var(--ink);stroke:none}
+.chart .donut-svg .donut-caption{fill:var(--muted)}
