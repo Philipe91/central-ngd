@@ -58,6 +58,10 @@ const CAMPANHAS = [
 const NOMES = ['Marcos Vieira', 'Paula Andrade', 'Rede Bom Preço', 'Agência Ponto', 'Fazenda Sete Lagoas', 'Camila Prado', 'Distribuidora Sul', 'Eduardo Lima', 'Supermercados Kiru', 'Studio Rosa', 'Construtora Aval', 'Feira Brasil Agro'];
 const ESTAGIOS = [['lead', 4], ['contato', 2], ['qualificado', 2], ['orcamento', 2], ['proposta', 1], ['venda', 3], ['perdido', 2]];
 
+// Rodar de novo não pode duplicar lead: produtos e campanhas têm chave única, leads não.
+// Então a demonstração é sempre refeita do zero.
+db.exec("DELETE FROM leads WHERE notes LIKE '[demo]%'");
+
 db.exec('BEGIN');
 try {
   const inserirProduto = db.prepare(`INSERT INTO products (sku, name, category, description, price_cents, status, created_at, updated_at)
