@@ -1,6 +1,6 @@
-# NGD · Central de conteúdo
+# Central NGD
 
-Painel local da NGD Núcleo Gráfico Digital para distribuir vídeos da loja no YouTube Shorts, Facebook Reels, Instagram Reels, TikTok e LinkedIn. Instagram: https://www.instagram.com/ngdgrafica/
+Painel local da NGD Núcleo Gráfico Digital para distribuir vídeos da loja no YouTube Shorts, Facebook Reels, Instagram Reels, TikTok e LinkedIn, e para acompanhar a mídia paga. Instagram: https://www.instagram.com/ngdgrafica/
 
 Tudo roda neste computador, sem serviço pago: painel (Node/Express), n8n Community, ffmpeg, yt-dlp e cloudflared portáteis.
 

@@ -1,7 +1,8 @@
 /* Gráficos no desenho do SaaS Dashboard UI Kit, em SVG puro, sem biblioteca e sem rede.
 
    area(opts)   curva suave com degradê embaixo, grade tracejada, balão escuro no ponto (cartão "Deals")
-   line(opts)   mesma grade, várias séries sem preenchimento
+   line(opts)   mesma grade, várias séries sem preenchimento; { linear: true } liga reta de
+                ponto a ponto, para série de contagem inteira
    bars(opts)   colunas agrupadas com topo arredondado, mesma grade
    hbars(items) barras horizontais com rótulo e valor (ranking)
    donut(opts)  anel fino de 8px com o número grande e colorido no centro (cartão "Tasks")
@@ -41,6 +42,12 @@ function smooth(pts) {
     s += `C${r1(x0 + h)} ${r1(y0 + m[i] * h)} ${r1(x1 - h)} ${r1(y1 - m[i + 1] * h)} ${r1(x1)} ${r1(y1)}`;
   }
   return s;
+}
+
+// Reta de ponto a ponto, para série de contagem inteira. Curva entre dois dias sugeriria
+// valor quebrado e evento fora da data, que não existem. Ligada com line({ linear: true }).
+function poly(pts) {
+  return pts.map(([x, y], i) => `${i ? 'L' : 'M'}${r1(x)} ${r1(y)}`).join('');
 }
 
 // grade tracejada #d3d8dd, linha de base #c2cfe0, números do eixo em #4c5862 (via CSS)
@@ -90,7 +97,7 @@ function slot(kind, spec) {
 }
 const RENDER = { line: lineChart, bars: barChart };
 
-function lineChart({ labels = [], values = [], name = '', series, unit = '', color = KIT.accent, marker = 'max', title = 'Gráfico', height = 220, width = 400, ticks = 4, fill }) {
+function lineChart({ labels = [], values = [], name = '', series, unit = '', color = KIT.accent, marker = 'max', title = 'Gráfico', height = 220, width = 400, ticks = 4, fill, linear = false }) {
   series = norm(series || [{ name, values, color }]);
   if (blank(labels, series)) return emptyChart('Ainda sem dados neste período.');
   const max = niceMax(Math.max(...series.flatMap(s => s.values)), ticks);
@@ -99,7 +106,7 @@ function lineChart({ labels = [], values = [], name = '', series, unit = '', col
   const id = 'kc' + (++uid);
   let defs = '', body = '';
   series.forEach((s, si) => {
-    const pts = s.values.map((v, i) => [x(i), f.y(v)]), d = smooth(pts);
+    const pts = s.values.map((v, i) => [x(i), f.y(v)]), d = linear ? poly(pts) : smooth(pts);
     if (fill && si === 0) {
       defs += `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity=".22"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/></linearGradient>`;
       body += `<path d="${d}L${r1(pts.at(-1)[0])} ${r1(f.T + f.ih)}L${r1(pts[0][0])} ${r1(f.T + f.ih)}Z" fill="url(#${id})"/>`;

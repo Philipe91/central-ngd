@@ -25,8 +25,10 @@ const porcento = p => (p == null ? '—' : p.toLocaleString('pt-BR', { maximumFr
 const pctDe = (n, todo) => (todo > 0 ? Math.round((n / todo) * 1000) / 10 : null);
 
 // As duas contagens de tempo do módulo. Aparecem como dica ao passar o mouse nos títulos.
-const NOTA_DIA = 'Cada ponto usa a data em que a coisa aconteceu: o dia em que o lead entrou, '
-  + 'o dia em que foi qualificado e o dia em que pediu orçamento.';
+const NOTA_DIA = 'O gráfico usa a data em que o evento aconteceu: o dia em que o lead entrou, o dia em '
+  + 'que foi qualificado e o dia em que pediu orçamento. Os indicadores e o funil usam os leads '
+  + 'originados no período escolhido. Por isso os totais podem ser diferentes, e essa diferença '
+  + 'não é erro nem duplicação: são duas perguntas diferentes sobre o mesmo período.';
 const NOTA_SAFRA = 'Conta os leads que nasceram no período escolhido e até onde cada um chegou até hoje. '
   + 'Por isso os números não batem com o gráfico diário, e somar os dois dá resultado errado.';
 
@@ -127,6 +129,17 @@ function filtros() {
 
 /* ---------------- indicadores ---------------- */
 
+/**
+ * Por que o custo está vazio. O cartão continua mostrando um traço; esta linha embaixo diz
+ * o que faltou, porque "sem dado" e "ninguém pediu orçamento" pedem providências diferentes.
+ */
+function motivo(custo, investido, quantidade, comoCalcula, semQuantidade) {
+  if (custo != null) return comoCalcula;
+  if (!investido) return 'Sem investimento registrado no período.';
+  if (!quantidade) return semQuantidade;
+  return 'Dados insuficientes para calcular.';
+}
+
 function indicadores(d) {
   const i = d.indicadores;
   const cartao = (rotulo, ic, valor, nota) => `<div class="k-kpi">
@@ -139,9 +152,9 @@ function indicadores(d) {
       ${cartao('Pedidos de orçamento', 'link', fmt(i.orcamentos), `${porcento(pctDe(i.orcamentos, i.leads))} dos leads`)}
     </section>
     <section class="k-card k-kpis" aria-label="Custo por etapa">
-      ${cartao('Custo por lead', 'users', brl(i.cpl), i.cpl == null ? 'falta gasto ou lead para calcular' : 'investido ÷ leads da NGD')}
-      ${cartao('Custo por lead qualificado', 'check', brl(i.cpql), i.cpql == null ? 'falta gasto ou qualificado para calcular' : 'investido ÷ qualificados')}
-      ${cartao('Custo por orçamento', 'link', brl(i.cpo), i.cpo == null ? 'falta gasto ou orçamento para calcular' : 'investido ÷ pedidos de orçamento')}
+      ${cartao('Custo por lead', 'users', brl(i.cpl), motivo(i.cpl, i.investido_cents, i.leads, 'investido ÷ leads da NGD', 'Nenhum lead registrado no período.'))}
+      ${cartao('Custo por lead qualificado', 'check', brl(i.cpql), motivo(i.cpql, i.investido_cents, i.qualificados, 'investido ÷ qualificados', 'Nenhum lead qualificado no período.'))}
+      ${cartao('Custo por orçamento', 'link', brl(i.cpo), motivo(i.cpo, i.investido_cents, i.orcamentos, 'investido ÷ pedidos de orçamento', 'Nenhum pedido de orçamento no período.'))}
       ${cartao('Impressões e cliques', 'image', fmt(d.plataforma.impressoes), `${fmt(d.plataforma.cliques)} cliques, número da plataforma`)}
     </section>`;
 }
@@ -155,19 +168,20 @@ function evolucao(d) {
     { name: 'Qualificados', values: s.qualificados, color: CORES.qualificados },
     { name: 'Pedidos de orçamento', values: s.orcamentos, color: CORES.orcamentos },
   ];
-  const total = k => s[k].reduce((a, b) => a + b, 0);
-  // O balão do gráfico mostra o valor do dia; o data-dias alimenta a dica completa, com a
-  // data por extenso e as três séries, montada pelo ouvinte lá embaixo.
+  // A legenda traz só os nomes das séries. Totais aqui pareciam brigar com os indicadores
+  // de cima, que contam outra coisa: o gráfico soma eventos do período, inclusive de leads
+  // captados antes dele. Os números do dia ficam na dica, ao passar o mouse.
   return `<section class="k-card" id="dash-evolucao" data-dias="${esc(JSON.stringify(s))}">
     <div class="k-card-head"><h2 class="k-card-title" title="${esc(NOTA_DIA)}">Evolução da captação</h2>
       <span class="k-muted k-body2" title="${esc(NOTA_DIA)}">por dia do evento</span></div>
+    <div class="k-card-body tight"><p class="k-muted k-body2 k-m0" title="${esc(NOTA_DIA)}">Eventos ocorridos no período, inclusive de leads captados anteriormente.</p></div>
     <div class="k-card-body">
       ${legend([
-    { label: 'Leads NGD', value: total('leads'), color: CORES.leads },
-    { label: 'Qualificados', value: total('qualificados'), color: CORES.qualificados },
-    { label: 'Pedidos de orçamento', value: total('orcamentos'), color: CORES.orcamentos },
+    { label: 'Leads NGD', color: CORES.leads },
+    { label: 'Qualificados', color: CORES.qualificados },
+    { label: 'Pedidos de orçamento', color: CORES.orcamentos },
   ], { row: true })}
-      ${line({ labels: s.dias.map(curta), series, title: 'Evolução da captação por dia', height: 440 })}
+      ${line({ labels: s.dias.map(curta), series, linear: true, title: 'Evolução da captação por dia', height: 440 })}
       <p class="k-note">Dia sem nada registrado vale zero, e não some do gráfico. O investimento fica fora
         daqui de propósito: dinheiro e quantidade de lead têm escalas diferentes, e um esconderia o outro.</p>
     </div></section>`;
