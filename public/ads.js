@@ -24,6 +24,7 @@ let ligado = false;
 let formAberto = false;
 let formLead = false;
 let formCampanha = false;
+let formMeta = false;
 let aba = 'dashboard';
 
 async function api(url, options) {
@@ -101,6 +102,27 @@ function corpo() {
 const campo = (rotulo, input, dica = '') => `<label class="k-field"><span>${rotulo}</span>${input}${dica ? `<small class="k-hint">${dica}</small>` : ''}</label>`;
 const acoesForm = (cancelar, enviar) => `<div class="k-form-foot"><button type="button" class="k-btn secondary sm" ${cancelar}>Cancelar</button><button class="k-btn primary sm">${enviar}</button></div>`;
 
+/**
+ * Onde o dono da loja cola o token de leitura da Meta. O campo existe para o segredo ir
+ * direto do navegador para data/ads-secrets.json, sem passar por conversa nem por log.
+ * O token nunca volta para a tela: o painel só devolve uma versão mascarada.
+ */
+function formularioMeta(m) {
+  return `<form class="k-form k-card" id="ads-meta-form">
+    <div class="k-form-grid">
+      ${campo('Identificador da conta de anúncios',
+    `<input name="adAccountId" required maxlength="40" autocomplete="off" placeholder="act_000000000000000" value="${esc(m.conta || '')}">`,
+    'Aparece no Gerenciador de Anúncios, no alto da tela, como "Conta: act_…". Não é segredo.')}
+      ${campo('Token de leitura',
+    '<input name="accessToken" type="password" required autocomplete="new-password" placeholder="cole aqui">',
+    'Precisa apenas da permissão ads_read. Fica só neste computador, fora do git, e não aparece mais na tela.')}
+    </div>
+    <p class="k-note">O painel só lê desta conta. Ele não cria, não pausa, não altera orçamento e não apaga campanha.
+      O teto de gasto tem de existir também na Meta, porque este computador pode estar desligado.</p>
+    <p class="k-error-text" id="ads-meta-error" role="alert"></p>
+    ${acoesForm('data-ads-meta', 'Salvar e testar')}</form>`;
+}
+
 function painelCampanhas() {
   const itens = dados.campanhas;
   const m = dados.status?.meta || {};
@@ -108,7 +130,13 @@ function painelCampanhas() {
       <strong>${m.configurado ? `Meta conectada: ${esc(m.nome || m.conta)}.` : 'Meta ainda não conectada.'}</strong>
       ${m.configurado ? 'O painel só lê gasto e resultado. Ele não cria, não pausa e não altera campanha.'
         : 'Enquanto o token não for configurado, crie campanhas aqui mesmo para gerar os códigos e os links. Quando a conta for conectada, os números de gasto aparecem ao lado.'}
-      ${m.erro ? `<span class="k-error-text"> ${esc(m.erro)}</span>` : ''}</p></div>
+      ${m.erro ? `<span class="k-error-text"> ${esc(m.erro)}</span>` : ''}</p>
+      <div class="k-row-tight">${m.configurado
+    ? `<button class="k-btn tertiary sm" type="button" data-ads-meta>${formMeta ? 'Fechar' : 'Trocar token'}</button>
+           <button class="k-btn tertiary sm" type="button" data-ads-meta-testar>Testar conexão</button>
+           <button class="k-btn tertiary sm" type="button" data-ads-meta-sair>Desconectar</button>`
+    : `<button class="k-btn primary sm" type="button" data-ads-meta>${formMeta ? 'Fechar' : 'Conectar a Meta'}</button>`}</div></div>
+    ${formMeta ? formularioMeta(m) : ''}
     <section class="k-card">
       <div class="k-card-head"><h2 class="k-card-title">Campanhas e links rastreados</h2><span class="k-muted k-body2">O código vai no link e volta na conversa do WhatsApp</span></div>
       ${formCampanha ? `<form class="k-form" id="ads-camp-form"><div class="k-form-grid">
@@ -252,6 +280,17 @@ function ligar() {
       try { await navigator.clipboard.writeText(d.adsCopiar); aviso('Link copiado.'); }
       catch { aviso('Não consegui copiar. O link é: ' + d.adsCopiar); }
     }
+    if (alvo.hasAttribute('data-ads-meta')) { formMeta = !formMeta; desenhar(); $('#ads-meta-form')?.elements.adAccountId.focus(); }
+    if (alvo.hasAttribute('data-ads-meta-testar')) {
+      aviso('Falando com a Meta…');
+      try { const r = await api('/api/ads/meta/test', { method: 'POST' }); aviso(`Conexão boa: ${r.nome || r.conta || 'conta encontrada'}.`); await carregar(); }
+      catch (error) { aviso(error.message); await carregar(); }
+    }
+    if (alvo.hasAttribute('data-ads-meta-sair')) {
+      if (!confirm('Desconectar a Meta e apagar o token guardado neste computador?')) return;
+      try { await api('/api/ads/meta/disconnect', { method: 'POST' }); formMeta = false; await carregar(); aviso('Meta desconectada. O token foi apagado.'); }
+      catch (error) { aviso(error.message); }
+    }
     if (alvo.hasAttribute('data-ads-nova-campanha')) { formCampanha = true; desenhar(); $('#ads-camp-form')?.elements.name.focus(); }
     if (alvo.hasAttribute('data-ads-cancelar-campanha')) { formCampanha = false; desenhar(); }
     if (d.adsRemoverLead) {
@@ -285,6 +324,24 @@ function ligar() {
   });
 
   main.addEventListener('submit', async e => {
+    if (e.target.id === 'ads-meta-form') {
+      e.preventDefault();
+      const form = e.target;
+      const botao = form.querySelector('button.primary');
+      botao.disabled = true;
+      const falhou = msg => { const p = $('#ads-meta-error'); if (p) p.textContent = msg; botao.disabled = false; };
+      try {
+        // Salva e já pergunta à Meta se o token serve, para o erro aparecer agora e não
+        // na primeira sincronização, quando ninguém está olhando.
+        await api('/api/ads/meta/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+        form.reset();
+        const r = await api('/api/ads/meta/test', { method: 'POST' });
+        formMeta = false;
+        await carregar();
+        aviso(`Meta conectada: ${r.nome || r.conta || 'conta encontrada'}. O painel só lê.`);
+      } catch (error) { falhou(error.message); await carregar(); }
+      return;
+    }
     if (e.target.id === 'ads-camp-form') {
       e.preventDefault();
       const form = e.target;
