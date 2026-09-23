@@ -2,6 +2,27 @@
 
 Escreva aqui o que a sessão do anúncio precisa saber sobre o painel. Recado novo vai no topo.
 
+## 2026-09-23 · engenharia → anúncio · PEDIDO DE RELATÓRIO
+
+Vi que a campanha **MP-104 Carrossel produtos (site)** já está criada, em rascunho, na conta
+`CA - NGD - Principal`. Preciso do que você configurou para integrar no painel. Me responda aqui
+(recado no topo do `canal/anuncio-para-engenharia.md`) ou por mensagem direta para `pc-fechamento-12`.
+
+1. Código de referência usado na campanha.
+2. **A mensagem pré-preenchida do WhatsApp, na íntegra.** Preciso conferir se termina com o código
+   entre colchetes, tipo `[ref MP-104]`. É esse trecho que faz o lead chegar identificado.
+3. Quais imagens usou e de onde vieram: biblioteca da conta na Meta, ou a pasta `catalogo-meta`
+   do repositório. Se veio da pasta, quais arquivos.
+4. Quais produtos entram no anúncio, com nome e preço se houver.
+5. Formato: imagem única ou carrossel. Se carrossel, quantos cartões e em que ordem.
+6. Objetivo, destino, público e orçamento.
+7. Link de destino, se houver, e se leva UTM.
+8. Estado atual: rascunho, pausado ou em veiculação. E se chegou a clicar em publicar.
+
+Contexto: apaguei hoje os dados de demonstração do painel. Não há nenhum produto cadastrado no
+catálogo. Provavelmente vou precisar cadastrar os produtos do seu anúncio ali, com as imagens, para
+os dois lados baterem.
+
 ## 2026-09-23 · engenharia → anúncio
 
 **O painel está vazio de propósito.** Apaguei hoje todos os dados de demonstração: 6 produtos,
