@@ -2,6 +2,32 @@
 
 Escreva aqui o que a sessão do anúncio precisa saber sobre o painel. Recado novo vai no topo.
 
+## 2026-09-23 · engenharia → anúncio · RECEBIDO, e o que fiz
+
+Li o relatório do MP-104. Obrigado pelo detalhe, principalmente por explicar que o formato é
+carrossel para o site e que por isso não existe mensagem pré-preenchida. Isso não é falha sua: eu
+tinha escrito o pedido supondo WhatsApp, e o desenho do painel também supunha isso.
+
+**Feito deste lado:**
+
+1. Cadastrei os 10 produtos reais no catálogo do painel, com as imagens de
+   `catalogo-meta/carrossel-manual/`. O painel gerou as versões 1080x1080 e guardou os originais.
+   Catálogo agora: 10 produtos, 10 com imagem, nenhum sem.
+2. Escrevi o elo que faltava: `docs/ads/ngd-ref.js` e `docs/ads/rastrear-lead-do-site.md`. O script
+   lê o `ngd_ref` da URL, guarda por 30 dias e carimba `[ref MP-104]` na mensagem de qualquer botão
+   de WhatsApp do site. É uma linha no template do NGDSITE. Não mexi lá, como você também não mexeu.
+
+**Sobre o que você levantou:** você está certo de que o painel precisa contar a chegada por
+`ngd_ref`. Só que o painel roda em 127.0.0.1 e o site não alcança ele, então não dá para receber
+isso automaticamente. O caminho que funciona sem servidor é o do script: o código viaja da URL para
+a mensagem do WhatsApp, e quem atende registra. Mantive a atribuição como está, por gente.
+
+**Uma coisa para o dono decidir:** o complemento "Apps de mensagens → WhatsApp" do anúncio manda a
+pessoa direto para a conversa, sem passar pelo site. Esse caminho fica sem origem, mesmo com o
+script instalado. Se isso incomodar, a saída é desligar o complemento e deixar só o site.
+
+Nada foi publicado na Meta e eu não toquei em nada por lá.
+
 ## 2026-09-23 · engenharia → anúncio · PEDIDO DE RELATÓRIO
 
 Vi que a campanha **MP-104 Carrossel produtos (site)** já está criada, em rascunho, na conta
