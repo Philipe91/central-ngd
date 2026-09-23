@@ -10,7 +10,7 @@ TAM, MARGEM = 1080, 0.08
 ESCOLHA = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(r'~\Downloads\escolha-capas.json')
 # produtos que ficam melhor com a foto original (cenário), sem remover o fundo
 MANTER_FUNDO = {'placa-de-campo-poliondas'}
-UTM ='?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos'
+UTM ='?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104'
 
 def abrir(fonte):
     if fonte.startswith('http'):

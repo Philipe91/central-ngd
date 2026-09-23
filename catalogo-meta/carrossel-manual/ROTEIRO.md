@@ -4,16 +4,16 @@ Para cada card: suba a imagem, cole o título e o link. Botão de todos: **Saiba
 
 | Card | Imagem | Título (não aparece no Feed do Instagram) | Link |
 |---|---|---|---|
-| 01 | 01-totem-triedro-em-poliondas.jpg | Totem Triedro em Poliondas | https://nucleografico.com.br/loja/produto/totem-triedro-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 02 | 02-display-de-chao.jpg | Display de Chão | https://nucleografico.com.br/loja/produto/display-de-chao/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 03 | 03-display-recortado-mao-gigante.jpg | Display de Mão | https://nucleografico.com.br/loja/produto/display-recortado-mao-gigante/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 04 | 04-totem-eliptico-em-poliondas.jpg | Totem Elíptico | https://nucleografico.com.br/loja/produto/totem-eliptico-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 05 | 05-banner-rollup.jpg | Banner Rollup | https://nucleografico.com.br/loja/produto/banner-rollup/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 06 | 06-totem-replica-em-poliondas.jpg | Totem Réplica em Poliondas | https://nucleografico.com.br/loja/produto/totem-replica-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 07 | 07-cubo-promocional-em-poliondas.jpg | Cubo Promocional em Poliondas | https://nucleografico.com.br/loja/produto/cubo-promocional-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 08 | 08-totem-triangular.jpg | Totem Triangular | https://nucleografico.com.br/loja/produto/totem-triangular/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 09 | 09-lixeira-personalizada-em-poliondas.jpg | Lixeira Personalizada em Poliondas | https://nucleografico.com.br/loja/produto/lixeira-personalizada-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
-| 10 | 10-placa-de-campo-poliondas.jpg | Placa de Campo em Poliondas | https://nucleografico.com.br/loja/produto/placa-de-campo-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=carrossel-produtos |
+| 01 | 01-totem-triedro-em-poliondas.jpg | Totem Triedro em Poliondas | https://nucleografico.com.br/loja/produto/totem-triedro-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 02 | 02-display-de-chao.jpg | Display de Chão | https://nucleografico.com.br/loja/produto/display-de-chao/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 03 | 03-display-recortado-mao-gigante.jpg | Display de Mão | https://nucleografico.com.br/loja/produto/display-recortado-mao-gigante/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 04 | 04-totem-eliptico-em-poliondas.jpg | Totem Elíptico | https://nucleografico.com.br/loja/produto/totem-eliptico-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 05 | 05-banner-rollup.jpg | Banner Rollup | https://nucleografico.com.br/loja/produto/banner-rollup/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 06 | 06-totem-replica-em-poliondas.jpg | Totem Réplica em Poliondas | https://nucleografico.com.br/loja/produto/totem-replica-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 07 | 07-cubo-promocional-em-poliondas.jpg | Cubo Promocional em Poliondas | https://nucleografico.com.br/loja/produto/cubo-promocional-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 08 | 08-totem-triangular.jpg | Totem Triangular | https://nucleografico.com.br/loja/produto/totem-triangular/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 09 | 09-lixeira-personalizada-em-poliondas.jpg | Lixeira Personalizada em Poliondas | https://nucleografico.com.br/loja/produto/lixeira-personalizada-em-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
+| 10 | 10-placa-de-campo-poliondas.jpg | Placa de Campo em Poliondas | https://nucleografico.com.br/loja/produto/placa-de-campo-poliondas/?utm_source=meta&utm_medium=paid&utm_campaign=MP-104&ngd_ref=MP-104 |
 
 ## Texto principal (fica acima do carrossel)
 
