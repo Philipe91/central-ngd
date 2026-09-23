@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escolher capas — Carrossel NGD</title>
+<style>
+  :root { --azul:#013E7D; --ciano:#00AEED; --fundo:#f4f6f9; --card:#fff; --texto:#1b2430; --suave:#6b7685; --borda:#dde3ea; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--fundo); color:var(--texto); }
+  header { position:sticky; top:0; z-index:5; background:var(--azul); color:#fff; padding:14px 24px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; flex:1; min-width:220px; }
+  .contador { font-weight:700; background:rgba(255,255,255,.14); padding:6px 12px; border-radius:999px; }
+  .contador.cheio { background:var(--ciano); color:var(--azul); }
+  .contador.passou { background:#e5484d; }
+  button { font:inherit; cursor:pointer; border:0; border-radius:8px; padding:9px 16px; font-weight:600; }
+  .exportar { background:var(--ciano); color:var(--azul); }
+  .ajuda { max-width:1200px; margin:18px auto 0; padding:0 24px; color:var(--suave); font-size:14px; line-height:1.5; }
+  main { max-width:1200px; margin:0 auto; padding:16px 24px 60px; display:grid; gap:18px; }
+  .produto { background:var(--card); border:1px solid var(--borda); border-radius:14px; padding:16px; }
+  .produto.fora { opacity:.55; }
+  .topo { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .topo h2 { font-size:16px; margin:0; flex:1; }
+  .topo a { color:var(--azul); font-size:13px; }
+  .incluir { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; cursor:pointer; user-select:none; }
+  .incluir input { width:18px; height:18px; accent-color:var(--azul); }
+  .ordem { font-size:12px; font-weight:700; color:#fff; background:var(--azul); border-radius:6px; padding:2px 8px; }
+  .fotos { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .foto { position:relative; border:3px solid transparent; border-radius:10px; overflow:hidden; cursor:pointer; background:#fff; aspect-ratio:1; display:flex; align-items:center; justify-content:center; outline:1px solid var(--borda); }
+  .foto img { max-width:100%; max-height:100%; display:block; }
+  .foto:hover { outline-color:var(--ciano); }
+  .foto.sel { border-color:var(--ciano); outline-color:var(--ciano); }
+  .foto.sel::after { content:"✓ Capa"; position:absolute; top:6px; left:6px; background:var(--ciano); color:var(--azul); font-weight:700; font-size:12px; padding:2px 8px; border-radius:6px; }
+  .selo { position:absolute; bottom:6px; right:6px; font-size:11px; background:rgba(0,0,0,.65); color:#fff; padding:2px 6px; border-radius:5px; }
+  .selo.alta { background:#1f8a4c; }
+  .aviso { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--texto); color:#fff; padding:10px 18px; border-radius:10px; display:none; }
+  @media (max-width:600px) { header { padding:12px 16px; } main, .ajuda { padding-left:16px; padding-right:16px; } .fotos { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Escolher capas — Carrossel NGD</h1>
+  <span class="contador" id="contador">0 / 10 no carrossel</span>
+  <button class="exportar" id="exportar">Exportar escolha</button>
+</header>
+<p class="ajuda">Clique na foto que vai ser a <b>capa</b> de cada produto. Marque <b>"Entra no carrossel"</b> nos produtos do anúncio (máximo 10) — a ordem dos cards é a ordem em que você marca. Selo verde = existe a original em alta na pasta NGDSITE. No fim, clique em <b>Exportar escolha</b> e me avise.</p>
+<main id="lista"></main>
+<div class="aviso" id="aviso"></div>
+<script>
+const DADOS = [{"id": "placa-de-campo-poliondas", "nome": "Placa de Campo em Poliondas", "link": "https://nucleografico.com.br/loja/produto/placa-de-campo-poliondas/", "fotos": [{"mini": "candidatas/placa-de-campo-poliondas/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_fev._de_2026_08_27_51.png", "tamanho": [933, 1400], "capa_atual": true, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo03.jpg", "tamanho": [1080, 1080], "capa_atual": false, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo02.jpg", "tamanho": [1080, 1080], "capa_atual": false, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo01.jpg", "tamanho": [1080, 1080], "capa_atual": false, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/04.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_fev._de_2026_08_27_51.png", "tamanho": [933, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/05.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_6_de_fev._de_2026_10_55_33.png", "tamanho": [933, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/placa-de-campo-poliondas/06.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-02-04_at_15.14.16.jpeg", "tamanho": [1400, 1050], "capa_atual": false, "alta": true}]}, {"id": "lixeira-personalizada-em-poliondas", "nome": "Lixeira Personalizada em Poliondas", "link": "https://nucleografico.com.br/loja/produto/lixeira-personalizada-em-poliondas/", "fotos": [{"mini": "candidatas/lixeira-personalizada-em-poliondas/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_mai._de_2026_14_48_37.png", "tamanho": [1280, 1229], "capa_atual": true, "alta": true}, {"mini": "candidatas/lixeira-personalizada-em-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-01-28_at_14.47.05_9.jpeg", "tamanho": [1280, 960], "capa_atual": false, "alta": true}, {"mini": "candidatas/lixeira-personalizada-em-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-01-28_at_14.47.05_10.jpeg", "tamanho": [1280, 960], "capa_atual": false, "alta": true}, {"mini": "candidatas/lixeira-personalizada-em-poliondas/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag08_03_600x502.png", "tamanho": [600, 502], "capa_atual": false, "alta": true}]}, {"id": "totem-triedro-em-poliondas", "nome": "Totem Triedro em Poliondas", "link": "https://nucleografico.com.br/loja/produto/totem-triedro-em-poliondas/", "fotos": [{"mini": "candidatas/totem-triedro-em-poliondas/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_11_de_mai._de_2026_15_21_40.png", "tamanho": [1338, 1175], "capa_atual": true, "alta": true}, {"mini": "candidatas/totem-triedro-em-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_11_de_mai._de_2026_15_16_41.png", "tamanho": [1400, 1122], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-triedro-em-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_11_de_mai._de_2026_15_34_59.png", "tamanho": [1199, 1312], "capa_atual": false, "alta": true}]}, {"id": "totem-eliptico-em-poliondas", "nome": "Totem Elíptico", "link": "https://nucleografico.com.br/loja/produto/totem-eliptico-em-poliondas/", "fotos": [{"mini": "candidatas/totem-eliptico-em-poliondas/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\Gemini_Generated_Image_ngtxengtxengtxen.png", "tamanho": [1400, 1320], "capa_atual": true, "alta": true}, {"mini": "candidatas/totem-eliptico-em-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag05_01_1350x1400.png", "tamanho": [1350, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-eliptico-em-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_us1dvcus1dvcus1d.png", "tamanho": [1374, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-eliptico-em-poliondas/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag04_01_1378x1400.png", "tamanho": [1378, 1400], "capa_atual": false, "alta": true}]}, {"id": "totem-replica-em-poliondas", "nome": "Totem Réplica em Poliondas", "link": "https://nucleografico.com.br/loja/produto/totem-replica-em-poliondas/", "fotos": [{"mini": "candidatas/totem-replica-em-poliondas/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\replica05.png", "tamanho": [931, 1400], "capa_atual": true, "alta": true}, {"mini": "candidatas/totem-replica-em-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica01.png", "tamanho": [1265, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-replica-em-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica02.png", "tamanho": [1186, 1327], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-replica-em-poliondas/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica03.png", "tamanho": [1265, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-replica-em-poliondas/04.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica04.png", "tamanho": [1195, 1316], "capa_atual": false, "alta": true}]}, {"id": "display-de-chao", "nome": "Display de Chão", "link": "https://nucleografico.com.br/loja/produto/display-de-chao/", "fotos": [{"mini": "candidatas/display-de-chao/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\Gemini_Generated_Image_8qspw48qspw48qsp.png", "tamanho": [1400, 1107], "capa_atual": true, "alta": true}, {"mini": "candidatas/display-de-chao/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_25_de_mai._de_2026_15_35_48.png", "tamanho": [933, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-de-chao/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag06_01_933x1400.png", "tamanho": [933, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-de-chao/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_25_de_mai._de_2026_16_07_32.png", "tamanho": [1254, 1254], "capa_atual": false, "alta": true}]}, {"id": "display-recortado-mao-gigante", "nome": "Display de Mão", "link": "https://nucleografico.com.br/loja/produto/display-recortado-mao-gigante/", "fotos": [{"mini": "candidatas/display-recortado-mao-gigante/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\mao-gigante-01.jpg", "tamanho": [1200, 1200], "capa_atual": true, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-02.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-03.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-04.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/04.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-05.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/05.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-06.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}, {"mini": "candidatas/display-recortado-mao-gigante/06.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-07.jpg", "tamanho": [1200, 1200], "capa_atual": false, "alta": true}]}, {"id": "cubo-promocional-em-poliondas", "nome": "Cubo Promocional em Poliondas", "link": "https://nucleografico.com.br/loja/produto/cubo-promocional-em-poliondas/", "fotos": [{"mini": "candidatas/cubo-promocional-em-poliondas/00.jpg", "fonte": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/cubo-promocional-em-poliondas.webp", "tamanho": [640, 640], "capa_atual": true, "alta": false}, {"mini": "candidatas/cubo-promocional-em-poliondas/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\cubo03.jpg", "tamanho": [1400, 788], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\cubo04.jpg", "tamanho": [1400, 788], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_tkc7a9tkc7a9tkc7.png", "tamanho": [1216, 880], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/04.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_odnbaaodnbaaodnb.png", "tamanho": [1400, 999], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/05.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_hvs01ahvs01ahvs0_1.png", "tamanho": [1400, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/06.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_gahei1gahei1gahe.png", "tamanho": [1400, 1084], "capa_atual": false, "alta": true}, {"mini": "candidatas/cubo-promocional-em-poliondas/07.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_7u4aew7u4aew7u4a.png", "tamanho": [1400, 1380], "capa_atual": false, "alta": true}]}, {"id": "banner-rollup", "nome": "Banner Rollup", "link": "https://nucleografico.com.br/loja/produto/banner-rollup/", "fotos": [{"mini": "candidatas/banner-rollup/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\banner_rollup_1773089680554_CcdSOcN.png", "tamanho": [640, 640], "capa_atual": true, "alta": true}, {"mini": "candidatas/banner-rollup/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\roll04.png", "tamanho": [1392, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/banner-rollup/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\roll03.jpg", "tamanho": [1400, 788], "capa_atual": false, "alta": true}, {"mini": "candidatas/banner-rollup/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\portfolio-03.png", "tamanho": [1400, 788], "capa_atual": false, "alta": true}, {"mini": "candidatas/banner-rollup/04.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\vantagem-03.jpg", "tamanho": [1024, 1024], "capa_atual": false, "alta": true}, {"mini": "candidatas/banner-rollup/05.jpg", "fonte": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/gallery/banner-rollup-06.webp", "tamanho": [1200, 675], "capa_atual": false, "alta": false}, {"mini": "candidatas/banner-rollup/06.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\banner-roll-up---kit-completo-com-case-de-transporte.png", "tamanho": [1080, 1080], "capa_atual": false, "alta": true}]}, {"id": "totem-triangular", "nome": "Totem Triangular", "link": "https://nucleografico.com.br/loja/produto/totem-triangular/", "fotos": [{"mini": "candidatas/totem-triangular/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\megamenu\\totens\\Gemini_Generated_Image_v56k3uv56k3uv56k.png", "tamanho": [1316, 1400], "capa_atual": true, "alta": true}, {"mini": "candidatas/totem-triangular/01.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_qkqj7nqkqj7nqkqj.png", "tamanho": [1400, 1385], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-triangular/02.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_exr4q0exr4q0exr4.png", "tamanho": [1122, 1400], "capa_atual": false, "alta": true}, {"mini": "candidatas/totem-triangular/03.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_9m7d5n9m7d5n9m7d.png", "tamanho": [1016, 1400], "capa_atual": false, "alta": true}]}, {"id": "backdrop-para-eventos", "nome": "Backdrop para Eventos", "link": "https://nucleografico.com.br/loja/produto/backdrop-para-eventos/", "fotos": [{"mini": "candidatas/backdrop-para-eventos/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\backdrop-eventos.jpg", "tamanho": [1200, 1200], "capa_atual": true, "alta": true}]}, {"id": "portico-de-entrada", "nome": "Pórtico de Entrada", "link": "https://nucleografico.com.br/loja/produto/portico-de-entrada/", "fotos": [{"mini": "candidatas/portico-de-entrada/00.jpg", "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\portico-entrada.jpg", "tamanho": [1200, 1200], "capa_atual": true, "alta": true}]}];
+const CHAVE = 'ngd-escolha-capas';
+const PADRAO = ['totem-triedro-em-poliondas', 'display-de-chao', 'display-recortado-mao-gigante', 'totem-eliptico-em-poliondas', 'banner-rollup',
+  'totem-replica-em-poliondas', 'cubo-promocional-em-poliondas', 'totem-triangular', 'lixeira-personalizada-em-poliondas', 'placa-de-campo-poliondas'];
+let estado = null;
+try { estado = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) {}
+if (!estado) estado = { capa: {}, ordem: PADRAO.slice() };
+const salvar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) {} };
+
+function render() {
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+  for (const p of DADOS) {
+    const capa = estado.capa[p.id] ?? 0;
+    const pos = estado.ordem.indexOf(p.id);
+    const sec = document.createElement('section');
+    sec.className = 'produto' + (pos < 0 ? ' fora' : '');
+    sec.innerHTML = `<div class="topo">
+        <h2>${p.nome}</h2>
+        ${pos >= 0 ? `<span class="ordem">Card ${pos + 1}</span>` : ''}
+        <a href="${p.link}" target="_blank" rel="noopener">ver no site ↗</a>
+        <label class="incluir"><input type="checkbox" ${pos >= 0 ? 'checked' : ''}> Entra no carrossel</label>
+      </div><div class="fotos"></div>`;
+    sec.querySelector('input').onchange = e => {
+      if (e.target.checked) estado.ordem.push(p.id); else estado.ordem = estado.ordem.filter(x => x !== p.id);
+      salvar(); render();
+    };
+    const fotos = sec.querySelector('.fotos');
+    p.fotos.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'foto' + (i === capa ? ' sel' : '');
+      d.innerHTML = `<img src="${f.mini}" alt="" loading="lazy"><span class="selo ${f.alta ? 'alta' : ''}">${f.tamanho[0]}×${f.tamanho[1]}</span>`;
+      d.onclick = () => { estado.capa[p.id] = i; salvar(); render(); };
+      fotos.appendChild(d);
+    });
+    lista.appendChild(sec);
+  }
+  const n = estado.ordem.length, c = document.getElementById('contador');
+  c.textContent = `${n} / 10 no carrossel`;
+  c.className = 'contador' + (n === 10 ? ' cheio' : n > 10 ? ' passou' : '');
+}
+
+function avisar(t) {
+  const a = document.getElementById('aviso');
+  a.textContent = t; a.style.display = 'block';
+  setTimeout(() => { a.style.display = 'none'; }, 3500);
+}
+
+document.getElementById('exportar').onclick = () => {
+  if (estado.ordem.length > 10) return avisar('Máximo 10 produtos no carrossel.');
+  if (!estado.ordem.length) return avisar('Marque pelo menos um produto.');
+  const escolha = estado.ordem.map((id, i) => {
+    const p = DADOS.find(x => x.id === id), f = p.fotos[estado.capa[id] ?? 0];
+    return { card: i + 1, id, nome: p.nome, fonte: f.fonte };
+  });
+  const blob = new Blob([JSON.stringify(escolha, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'escolha-capas.json' });
+  a.click();
+  avisar('Baixado escolha-capas.json — é só me avisar.');
+};
+
+render();
+</script>
+</body>
+</html>

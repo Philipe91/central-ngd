@@ -1,0 +1,110 @@
+[
+  {
+    "id": "placa-de-campo-poliondas",
+    "nome": "Placa de Campo em Poliondas",
+    "descricao": "Placa em poliondas (3 mm ou 4 mm) para sinalização agrícola, lavouras e campos de produção de sementes. Fabricada por indústria (CNAE de Fabricação) com NF e NCM próprios, em conformidade com a Lei 10.711/2003. Impressão UV direta + corte oscilante de precisão.",
+    "categoria": "Placas e Sinalização",
+    "link": "https://nucleografico.com.br/loja/produto/placa-de-campo-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/placa-de-campo-poliondas.webp",
+    "capa_arquivo": "capas-originais/placa-de-campo-poliondas.webp"
+  },
+  {
+    "id": "lixeira-personalizada-em-poliondas",
+    "nome": "Lixeira Personalizada em Poliondas",
+    "descricao": "Lixeira ecológica personalizada em poliondas para PDV, eventos e ambientes corporativos. Material resistente à umidade, impressão UV nas faces externas. Chega plana (desmontada) para frete econômico, monta em segundos pelos vincos.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/lixeira-personalizada-em-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/lixeira-personalizada-em-poliondas.webp",
+    "capa_arquivo": "capas-originais/lixeira-personalizada-em-poliondas.webp"
+  },
+  {
+    "id": "totem-triedro-em-poliondas",
+    "nome": "Totem Triedro em Poliondas",
+    "descricao": "Totem publicitário vertical em formato triangular com comunicação 360° nas três faces. Em poliondas 3mm, vem cortado, vincado e pronto para uso, sem montagem complicada.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/totem-triedro-em-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/totem-triedro-em-poliondas.webp",
+    "capa_arquivo": "capas-originais/totem-triedro-em-poliondas.webp"
+  },
+  {
+    "id": "totem-eliptico-em-poliondas",
+    "nome": "Totem Elíptico",
+    "descricao": "Totem publicitário vertical em formato elíptico, com 2 faces personalizadas em 4×4 cores. Em Papel Duplex Matte 350g com corte reto, visual elegante e moderno pra destacar sua marca no PDV.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/totem-eliptico-em-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/totem-eliptico-em-poliondas.webp",
+    "capa_arquivo": "capas-originais/totem-eliptico-em-poliondas.webp"
+  },
+  {
+    "id": "totem-replica-em-poliondas",
+    "nome": "Totem Réplica em Poliondas",
+    "descricao": "Totem com recorte especial (faca de contorno) que reproduz uma pessoa, personagem ou produto em tamanho real. Em poliondas 3mm, com base dobrável, impacto visual imediato no PDV.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/totem-replica-em-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/totem-replica-em-poliondas.webp",
+    "capa_arquivo": "capas-originais/totem-replica-em-poliondas.webp"
+  },
+  {
+    "id": "display-de-chao",
+    "nome": "Display de Chão",
+    "descricao": "Expositor que coloca seus produtos em pontos estratégicos do PDV, transforma qualquer corredor em vitrine. Poliondas com impressão em alta resolução, leve e resistente ao dia a dia da loja.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/display-de-chao/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/display-de-chao.webp",
+    "capa_arquivo": "capas-originais/display-de-chao.webp"
+  },
+  {
+    "id": "display-recortado-mao-gigante",
+    "nome": "Display de Mão",
+    "descricao": "Display recortado com efeito mão gigante segurando o seu produto. Poliondas com impressão UV e corte especial.",
+    "categoria": "Displays PDV",
+    "link": "https://nucleografico.com.br/loja/produto/display-recortado-mao-gigante/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/display-recortado-mao-gigante.webp",
+    "capa_arquivo": "capas-originais/display-recortado-mao-gigante.webp"
+  },
+  {
+    "id": "cubo-promocional-em-poliondas",
+    "nome": "Cubo Promocional em Poliondas",
+    "descricao": "Cubo promocional em poliondas com impressão CMYK (4×0) nas 6 faces. Comunicação 360° super versátil: leve, modular e pronto para uso. Indicado para eventos, feiras, stands e PDV.",
+    "categoria": "Cubo Promocional",
+    "link": "https://nucleografico.com.br/loja/produto/cubo-promocional-em-poliondas/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/cubo-promocional-em-poliondas.webp",
+    "capa_arquivo": "capas-originais/cubo-promocional-em-poliondas.webp"
+  },
+  {
+    "id": "banner-rollup",
+    "nome": "Banner Rollup",
+    "descricao": "Banner retrátil em base de alumínio com lona 380g fosca e impressão UV de alta definição. Comunica com impacto, monta em segundos e vem com case de transporte incluso. Ideal para feiras, eventos, recepções e PDV. Produção em até 48h.",
+    "categoria": "Rollup",
+    "link": "https://nucleografico.com.br/loja/produto/banner-rollup/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/banner-rollup.webp",
+    "capa_arquivo": "capas-originais/banner-rollup.webp"
+  },
+  {
+    "id": "totem-triangular",
+    "nome": "Totem Triangular",
+    "descricao": "Totem vertical modular em poliondas com 4 módulos de 3 faces, comunicação 360° sem suporte. Pronto para uso, posicionamento direto no chão. Ideal para eventos, feiras, stands e PDV.",
+    "categoria": "Totens PDV",
+    "link": "https://nucleografico.com.br/loja/produto/totem-triangular/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/totem-triangular.webp",
+    "capa_arquivo": "capas-originais/totem-triangular.webp"
+  },
+  {
+    "id": "backdrop-para-eventos",
+    "nome": "Backdrop para Eventos",
+    "descricao": "Painel autoportante de grande formato para palcos, coletivas e pontos de foto. Área de marca limpa e contínua, sem precisar furar parede.",
+    "categoria": "Eventos e Ativações",
+    "link": "https://nucleografico.com.br/loja/produto/backdrop-para-eventos/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/backdrop-para-eventos.webp",
+    "capa_arquivo": "capas-originais/backdrop-para-eventos.webp"
+  },
+  {
+    "id": "portico-de-entrada",
+    "nome": "Pórtico de Entrada",
+    "descricao": "Estrutura de entrada que valoriza a chegada do público e vira ponto de impacto para a marca e os patrocinadores.",
+    "categoria": "Eventos e Ativações",
+    "link": "https://nucleografico.com.br/loja/produto/portico-de-entrada/",
+    "capa_url": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/portico-de-entrada.webp",
+    "capa_arquivo": "capas-originais/portico-de-entrada.webp"
+  }
+]

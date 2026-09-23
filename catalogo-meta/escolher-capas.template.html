@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escolher capas — Carrossel NGD</title>
+<style>
+  :root { --azul:#013E7D; --ciano:#00AEED; --fundo:#f4f6f9; --card:#fff; --texto:#1b2430; --suave:#6b7685; --borda:#dde3ea; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--fundo); color:var(--texto); }
+  header { position:sticky; top:0; z-index:5; background:var(--azul); color:#fff; padding:14px 24px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; flex:1; min-width:220px; }
+  .contador { font-weight:700; background:rgba(255,255,255,.14); padding:6px 12px; border-radius:999px; }
+  .contador.cheio { background:var(--ciano); color:var(--azul); }
+  .contador.passou { background:#e5484d; }
+  button { font:inherit; cursor:pointer; border:0; border-radius:8px; padding:9px 16px; font-weight:600; }
+  .exportar { background:var(--ciano); color:var(--azul); }
+  .ajuda { max-width:1200px; margin:18px auto 0; padding:0 24px; color:var(--suave); font-size:14px; line-height:1.5; }
+  main { max-width:1200px; margin:0 auto; padding:16px 24px 60px; display:grid; gap:18px; }
+  .produto { background:var(--card); border:1px solid var(--borda); border-radius:14px; padding:16px; }
+  .produto.fora { opacity:.55; }
+  .topo { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .topo h2 { font-size:16px; margin:0; flex:1; }
+  .topo a { color:var(--azul); font-size:13px; }
+  .incluir { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; cursor:pointer; user-select:none; }
+  .incluir input { width:18px; height:18px; accent-color:var(--azul); }
+  .ordem { font-size:12px; font-weight:700; color:#fff; background:var(--azul); border-radius:6px; padding:2px 8px; }
+  .fotos { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .foto { position:relative; border:3px solid transparent; border-radius:10px; overflow:hidden; cursor:pointer; background:#fff; aspect-ratio:1; display:flex; align-items:center; justify-content:center; outline:1px solid var(--borda); }
+  .foto img { max-width:100%; max-height:100%; display:block; }
+  .foto:hover { outline-color:var(--ciano); }
+  .foto.sel { border-color:var(--ciano); outline-color:var(--ciano); }
+  .foto.sel::after { content:"✓ Capa"; position:absolute; top:6px; left:6px; background:var(--ciano); color:var(--azul); font-weight:700; font-size:12px; padding:2px 8px; border-radius:6px; }
+  .selo { position:absolute; bottom:6px; right:6px; font-size:11px; background:rgba(0,0,0,.65); color:#fff; padding:2px 6px; border-radius:5px; }
+  .selo.alta { background:#1f8a4c; }
+  .aviso { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--texto); color:#fff; padding:10px 18px; border-radius:10px; display:none; }
+  @media (max-width:600px) { header { padding:12px 16px; } main, .ajuda { padding-left:16px; padding-right:16px; } .fotos { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Escolher capas — Carrossel NGD</h1>
+  <span class="contador" id="contador">0 / 10 no carrossel</span>
+  <button class="exportar" id="exportar">Exportar escolha</button>
+</header>
+<p class="ajuda">Clique na foto que vai ser a <b>capa</b> de cada produto. Marque <b>"Entra no carrossel"</b> nos produtos do anúncio (máximo 10) — a ordem dos cards é a ordem em que você marca. Selo verde = existe a original em alta na pasta NGDSITE. No fim, clique em <b>Exportar escolha</b> e me avise.</p>
+<main id="lista"></main>
+<div class="aviso" id="aviso"></div>
+<script>
+const DADOS = /*DADOS*/;
+const CHAVE = 'ngd-escolha-capas';
+const PADRAO = ['totem-triedro-em-poliondas', 'display-de-chao', 'display-recortado-mao-gigante', 'totem-eliptico-em-poliondas', 'banner-rollup',
+  'totem-replica-em-poliondas', 'cubo-promocional-em-poliondas', 'totem-triangular', 'lixeira-personalizada-em-poliondas', 'placa-de-campo-poliondas'];
+let estado = null;
+try { estado = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) {}
+if (!estado) estado = { capa: {}, ordem: PADRAO.slice() };
+const salvar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) {} };
+
+function render() {
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+  for (const p of DADOS) {
+    const capa = estado.capa[p.id] ?? 0;
+    const pos = estado.ordem.indexOf(p.id);
+    const sec = document.createElement('section');
+    sec.className = 'produto' + (pos < 0 ? ' fora' : '');
+    sec.innerHTML = `<div class="topo">
+        <h2>${p.nome}</h2>
+        ${pos >= 0 ? `<span class="ordem">Card ${pos + 1}</span>` : ''}
+        <a href="${p.link}" target="_blank" rel="noopener">ver no site ↗</a>
+        <label class="incluir"><input type="checkbox" ${pos >= 0 ? 'checked' : ''}> Entra no carrossel</label>
+      </div><div class="fotos"></div>`;
+    sec.querySelector('input').onchange = e => {
+      if (e.target.checked) estado.ordem.push(p.id); else estado.ordem = estado.ordem.filter(x => x !== p.id);
+      salvar(); render();
+    };
+    const fotos = sec.querySelector('.fotos');
+    p.fotos.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'foto' + (i === capa ? ' sel' : '');
+      d.innerHTML = `<img src="${f.mini}" alt="" loading="lazy"><span class="selo ${f.alta ? 'alta' : ''}">${f.tamanho[0]}×${f.tamanho[1]}</span>`;
+      d.onclick = () => { estado.capa[p.id] = i; salvar(); render(); };
+      fotos.appendChild(d);
+    });
+    lista.appendChild(sec);
+  }
+  const n = estado.ordem.length, c = document.getElementById('contador');
+  c.textContent = `${n} / 10 no carrossel`;
+  c.className = 'contador' + (n === 10 ? ' cheio' : n > 10 ? ' passou' : '');
+}
+
+function avisar(t) {
+  const a = document.getElementById('aviso');
+  a.textContent = t; a.style.display = 'block';
+  setTimeout(() => { a.style.display = 'none'; }, 3500);
+}
+
+document.getElementById('exportar').onclick = () => {
+  if (estado.ordem.length > 10) return avisar('Máximo 10 produtos no carrossel.');
+  if (!estado.ordem.length) return avisar('Marque pelo menos um produto.');
+  const escolha = estado.ordem.map((id, i) => {
+    const p = DADOS.find(x => x.id === id), f = p.fotos[estado.capa[id] ?? 0];
+    return { card: i + 1, id, nome: p.nome, fonte: f.fonte };
+  });
+  const blob = new Blob([JSON.stringify(escolha, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'escolha-capas.json' });
+  a.click();
+  avisar('Baixado escolha-capas.json — é só me avisar.');
+};
+
+render();
+</script>
+</body>
+</html>

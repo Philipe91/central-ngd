@@ -1,0 +1,581 @@
+[
+ {
+  "id": "placa-de-campo-poliondas",
+  "nome": "Placa de Campo em Poliondas",
+  "link": "https://nucleografico.com.br/loja/produto/placa-de-campo-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_fev._de_2026_08_27_51.png",
+    "tamanho": [
+     933,
+     1400
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo03.jpg",
+    "tamanho": [
+     1080,
+     1080
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo02.jpg",
+    "tamanho": [
+     1080,
+     1080
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\placasdecampo01.jpg",
+    "tamanho": [
+     1080,
+     1080
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/04.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_fev._de_2026_08_27_51.png",
+    "tamanho": [
+     933,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/05.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_6_de_fev._de_2026_10_55_33.png",
+    "tamanho": [
+     933,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/placa-de-campo-poliondas/06.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-02-04_at_15.14.16.jpeg",
+    "tamanho": [
+     1400,
+     1050
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "lixeira-personalizada-em-poliondas",
+  "nome": "Lixeira Personalizada em Poliondas",
+  "link": "https://nucleografico.com.br/loja/produto/lixeira-personalizada-em-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/lixeira-personalizada-em-poliondas/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_25_de_mai._de_2026_14_48_37.png",
+    "tamanho": [
+     1280,
+     1229
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/lixeira-personalizada-em-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-01-28_at_14.47.05_9.jpeg",
+    "tamanho": [
+     1280,
+     960
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/lixeira-personalizada-em-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\WhatsApp_Image_2026-01-28_at_14.47.05_10.jpeg",
+    "tamanho": [
+     1280,
+     960
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/lixeira-personalizada-em-poliondas/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag08_03_600x502.png",
+    "tamanho": [
+     600,
+     502
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "totem-triedro-em-poliondas",
+  "nome": "Totem Triedro em Poliondas",
+  "link": "https://nucleografico.com.br/loja/produto/totem-triedro-em-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/totem-triedro-em-poliondas/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\ChatGPT_Image_11_de_mai._de_2026_15_21_40.png",
+    "tamanho": [
+     1338,
+     1175
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/totem-triedro-em-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_11_de_mai._de_2026_15_16_41.png",
+    "tamanho": [
+     1400,
+     1122
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-triedro-em-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_11_de_mai._de_2026_15_34_59.png",
+    "tamanho": [
+     1199,
+     1312
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "totem-eliptico-em-poliondas",
+  "nome": "Totem Elíptico",
+  "link": "https://nucleografico.com.br/loja/produto/totem-eliptico-em-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/totem-eliptico-em-poliondas/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\Gemini_Generated_Image_ngtxengtxengtxen.png",
+    "tamanho": [
+     1400,
+     1320
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/totem-eliptico-em-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag05_01_1350x1400.png",
+    "tamanho": [
+     1350,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-eliptico-em-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_us1dvcus1dvcus1d.png",
+    "tamanho": [
+     1374,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-eliptico-em-poliondas/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag04_01_1378x1400.png",
+    "tamanho": [
+     1378,
+     1400
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "totem-replica-em-poliondas",
+  "nome": "Totem Réplica em Poliondas",
+  "link": "https://nucleografico.com.br/loja/produto/totem-replica-em-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/totem-replica-em-poliondas/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\replica05.png",
+    "tamanho": [
+     931,
+     1400
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/totem-replica-em-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica01.png",
+    "tamanho": [
+     1265,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-replica-em-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica02.png",
+    "tamanho": [
+     1186,
+     1327
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-replica-em-poliondas/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica03.png",
+    "tamanho": [
+     1265,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-replica-em-poliondas/04.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\replica04.png",
+    "tamanho": [
+     1195,
+     1316
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "display-de-chao",
+  "nome": "Display de Chão",
+  "link": "https://nucleografico.com.br/loja/produto/display-de-chao/",
+  "fotos": [
+   {
+    "mini": "candidatas/display-de-chao/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\Gemini_Generated_Image_8qspw48qspw48qsp.png",
+    "tamanho": [
+     1400,
+     1107
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/display-de-chao/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_25_de_mai._de_2026_15_35_48.png",
+    "tamanho": [
+     933,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-de-chao/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\imagens-catalogo\\pag06_01_933x1400.png",
+    "tamanho": [
+     933,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-de-chao/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\ChatGPT_Image_25_de_mai._de_2026_16_07_32.png",
+    "tamanho": [
+     1254,
+     1254
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "display-recortado-mao-gigante",
+  "nome": "Display de Mão",
+  "link": "https://nucleografico.com.br/loja/produto/display-recortado-mao-gigante/",
+  "fotos": [
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\mao-gigante-01.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-02.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-03.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-04.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/04.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-05.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/05.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-06.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/display-recortado-mao-gigante/06.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\mao-gigante-07.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "cubo-promocional-em-poliondas",
+  "nome": "Cubo Promocional em Poliondas",
+  "link": "https://nucleografico.com.br/loja/produto/cubo-promocional-em-poliondas/",
+  "fotos": [
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/00.jpg",
+    "fonte": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/featured/cubo-promocional-em-poliondas.webp",
+    "tamanho": [
+     640,
+     640
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\cubo03.jpg",
+    "tamanho": [
+     1400,
+     788
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\cubo04.jpg",
+    "tamanho": [
+     1400,
+     788
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_tkc7a9tkc7a9tkc7.png",
+    "tamanho": [
+     1216,
+     880
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/04.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_odnbaaodnbaaodnb.png",
+    "tamanho": [
+     1400,
+     999
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/05.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_hvs01ahvs01ahvs0_1.png",
+    "tamanho": [
+     1400,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/06.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_gahei1gahei1gahe.png",
+    "tamanho": [
+     1400,
+     1084
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/cubo-promocional-em-poliondas/07.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_7u4aew7u4aew7u4a.png",
+    "tamanho": [
+     1400,
+     1380
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "banner-rollup",
+  "nome": "Banner Rollup",
+  "link": "https://nucleografico.com.br/loja/produto/banner-rollup/",
+  "fotos": [
+   {
+    "mini": "candidatas/banner-rollup/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\banner_rollup_1773089680554_CcdSOcN.png",
+    "tamanho": [
+     640,
+     640
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/banner-rollup/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\roll04.png",
+    "tamanho": [
+     1392,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/banner-rollup/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\roll03.jpg",
+    "tamanho": [
+     1400,
+     788
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/banner-rollup/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\portfolio-03.png",
+    "tamanho": [
+     1400,
+     788
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/banner-rollup/04.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\vantagem-03.jpg",
+    "tamanho": [
+     1024,
+     1024
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/banner-rollup/05.jpg",
+    "fonte": "https://eisqwuikemthtebpdqbj.supabase.co/storage/v1/object/public/catalogo/products/gallery/banner-rollup-06.webp",
+    "tamanho": [
+     1200,
+     675
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/banner-rollup/06.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\banner-roll-up---kit-completo-com-case-de-transporte.png",
+    "tamanho": [
+     1080,
+     1080
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "totem-triangular",
+  "nome": "Totem Triangular",
+  "link": "https://nucleografico.com.br/loja/produto/totem-triangular/",
+  "fotos": [
+   {
+    "mini": "candidatas/totem-triangular/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\megamenu\\totens\\Gemini_Generated_Image_v56k3uv56k3uv56k.png",
+    "tamanho": [
+     1316,
+     1400
+    ],
+    "capa_atual": true
+   },
+   {
+    "mini": "candidatas/totem-triangular/01.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_qkqj7nqkqj7nqkqj.png",
+    "tamanho": [
+     1400,
+     1385
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-triangular/02.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_exr4q0exr4q0exr4.png",
+    "tamanho": [
+     1122,
+     1400
+    ],
+    "capa_atual": false
+   },
+   {
+    "mini": "candidatas/totem-triangular/03.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\gallery\\Gemini_Generated_Image_9m7d5n9m7d5n9m7d.png",
+    "tamanho": [
+     1016,
+     1400
+    ],
+    "capa_atual": false
+   }
+  ]
+ },
+ {
+  "id": "backdrop-para-eventos",
+  "nome": "Backdrop para Eventos",
+  "link": "https://nucleografico.com.br/loja/produto/backdrop-para-eventos/",
+  "fotos": [
+   {
+    "mini": "candidatas/backdrop-para-eventos/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\backdrop-eventos.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": true
+   }
+  ]
+ },
+ {
+  "id": "portico-de-entrada",
+  "nome": "Pórtico de Entrada",
+  "link": "https://nucleografico.com.br/loja/produto/portico-de-entrada/",
+  "fotos": [
+   {
+    "mini": "candidatas/portico-de-entrada/00.jpg",
+    "fonte": "C:\\projetos\\NGD\\NGDSITE\\media\\products\\featured\\portico-entrada.jpg",
+    "tamanho": [
+     1200,
+     1200
+    ],
+    "capa_atual": true
+   }
+  ]
+ }
+]

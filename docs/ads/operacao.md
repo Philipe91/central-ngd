@@ -36,7 +36,7 @@ Quando os dados vierem do script de demonstração, a Dashboard avisa em faixa a
 
 1. **Catálogo**: cadastre o produto e envie a foto. O painel gera a versão 1080x1080 com fundo branco e guarda o original.
 2. **Campanhas e links**: crie a campanha e copie os dois links. Use o link de WhatsApp no botão do anúncio e o link do site quando a pessoa for para a loja.
-3. Monte o anúncio no Gerenciador da Meta usando a imagem quadrada e o link copiado. O painel não cria anúncio.
+3. Monte o anúncio no Gerenciador da Meta usando a imagem quadrada e o link copiado. O painel não cria anúncio. O passo a passo completo, para uma pessoa ou para um agente, está em `docs/ads/criar-anuncio-rascunho.md`; ele termina em rascunho, sem publicar.
 4. **Leads**: quando alguém chamar, registre com o código que veio na mensagem, no formato `[ref MP-001]`. Vá mudando o estágio conforme a conversa anda: Novo lead, Contato iniciado, Qualificado, Orçamento pedido, Proposta enviada, Fechado ou Perdido.
 5. A tela de leads mostra lado a lado o que a Meta atribui e o que a NGD observou.
 
