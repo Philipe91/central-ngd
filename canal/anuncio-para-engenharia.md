@@ -9,6 +9,48 @@ Preciso: ...
 Travou: ...
 -->
 
+## 2026-09-24 · anúncio → engenharia · MUDANÇAS DE CONTAS (Página/Instagram) + MP-104 atualizado
+
+**Resumo:** a NGD passou a usar a **Página de 1,7 mil seguidores** como oficial, e o **Instagram @ngdgrafica
+foi reconectado a ela**. Isso afeta a Central NGD (n8n) e a configuração Meta do painel.
+
+Fiz:
+
+1. **Página oficial nova:** "NGD Núcleo Gráfico", facebook.com/ngdgrafica, **Page ID 663854180311679**.
+   - Pertence ao portfólio **antigo** "NGD NÚCLEO GRÁFICO DIGITAL" (ID 225559398223639), administrado pela conta da Carol.
+   - O Danilo tem acesso **parcial** (conteúdo, mensagens, atividade da comunidade, anúncios, insights), **não** controle total.
+   - Tentamos compartilhar a Página com o portfólio atual (106674360918788) via Parceiros: a Meta recusou 3 vezes
+     ("Não foi possível atribuir ativos"). Abandonado.
+2. **Página antiga:** "NGD Núcleo Gráfico Digital - Sinalização e Comunicação Visual" (**Page ID 624749137386814**, 16 seguidores),
+   portfólio atual. Continua ativa, mas **não tem mais o Instagram**.
+3. **Instagram @ngdgrafica (IG ID 17841408041155930)** agora está conectado à **Página 663854180311679**. A conexão está
+   "com alguns recursos": a confirmação completa ("Analisar conexão") exige a administradora da Página, e a conta pessoal
+   da Carol está **com restrição na Meta**. Pendente.
+4. **WhatsApp:** a Página nova está ligada ao **+55 61 9649-8102**. A antiga usava o 9649-8279. Falta o dono confirmar qual é o comercial.
+5. **Anúncio MP-104** (conta CA - NGD - Principal, act_580068942617118; ainda **RASCUNHO**, nunca publicado):
+   - Identidade trocada para a Página 663854180311679 + @ngdgrafica (aviso "Verificar conexão" no Instagram; não bloqueia o rascunho).
+   - Texto novo: "Destaque sua marca onde o cliente decide a compra. Totens, displays e peças promocionais para lojas,
+     mercados, farmácias e eventos. Fábrica própria em Brasília, com envio para todo o Brasil. 👉 Arraste para o lado,
+     escolha o modelo e toque em Saiba mais para pedir seu orçamento."
+   - **Limite de gastos da campanha: R$ 300** (mínimo da Meta). Orçamento de R$ 20/dia mantido. Datas ficam para a publicação.
+   - Cards, links e UTM (`utm_campaign=MP-104&ngd_ref=MP-104`) sem mudança. Os campos do relatório de 23/09 continuam valendo.
+6. Relatório para o superior (PDF): `docs/ads/relatorio-mp104/Relatorio-Anuncio-MP-104.pdf`. Retomada: `docs/2026-09-23-onde-paramos-anuncio-mp104.md`.
+
+Preciso (engenharia):
+
+- **n8n / Central NGD:** o token de Página atual é da **624749137386814**, que perdeu o Instagram. As publicações no
+  **Instagram** pela Central devem falhar a partir de agora. Gerar um **token de Página da 663854180311679** e trocar nos fluxos
+  (Facebook e Instagram). Atenção: o app "Central NGD" (1428327089169450) precisa de alguém com acesso à Página nova;
+  o Danilo tem acesso parcial (pode faltar permissão para o token). Se falhar, vale a mesma trava da Carol.
+- **Painel (Mídia paga / config Meta):** atualizar o Page ID para 663854180311679; o IG ID continua 17841408041155930.
+- **Decisão pendente com o dono:** manter a Central publicando na Página antiga (só Facebook) até resolver o token,
+  ou pausar o Instagram na Central.
+- A atribuição do MP-104 segue por `ngd_ref`/`utm_campaign` na URL (sem WhatsApp com ref).
+
+Travou:
+
+- Controle total da Página nova (Danilo) e a confirmação completa do Instagram dependem da conta da Carol, que está restrita.
+
 ## 2026-09-23 · anúncio → engenharia · RELATÓRIO MP-104
 
 **Resumo:** o MP-104 é um **carrossel que leva ao site**, não um anúncio de WhatsApp. O dono da loja
