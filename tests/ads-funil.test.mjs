@@ -120,6 +120,47 @@ test('Meta: sincronização idempotente, sem duplicar, e falha registrada', asyn
   fs.rmSync(temporario, { recursive: true, force: true });
 });
 
+test('Meta: campanha com MP-000 no nome herda o código e os leads da campanha manual', async () => {
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'ngd-ref-'));
+  const arquivo = path.join(pasta, 'ads-secrets.json');
+  fs.writeFileSync(arquivo, JSON.stringify({ meta: { accessToken: 'token-de-teste-1234567890', adAccountId: 'act_999' } }));
+  const fetchFalso = async url => {
+    const u = new URL(url);
+    if (u.pathname.endsWith('/campaigns')) return resposta({ data: [
+      { id: '2001', name: 'MP-104 Carrossel produtos (site)', objective: 'OUTCOME_TRAFFIC', effective_status: 'ACTIVE' },
+      { id: '2002', name: 'Outra campanha', objective: 'OUTCOME_TRAFFIC', effective_status: 'PAUSED' },
+    ] });
+    if (u.pathname.endsWith('/insights')) return resposta({ data: [{ campaign_id: '2001', spend: '20.00', impressions: '900', clicks: '15', date_start: '2026-01-02', actions: [] }] });
+    return resposta({ id: 'act_999', name: 'Conta NGD', currency: 'BRL' });
+  };
+  const db = openDb(':memory:');
+  // O painel criou o código à mão antes de a Meta estar conectada; um lead já chegou com ele.
+  const manual = funil.criarCampanhaManual(db, { name: 'Carrossel produtos (site)' });
+  db.prepare("UPDATE campaigns SET ref_code = 'MP-104', external_id = 'manual:MP-104' WHERE id = ?").run(manual.id);
+  const lead = funil.criarLead(db, { ref_code: 'MP-104' });
+
+  const cliente = criarClienteMeta({ file: arquivo, fetch: fetchFalso, baseUrl: 'https://exemplo.invalido/v21.0' });
+  const agora = () => new Date('2026-01-03T12:00:00Z');
+  await sincronizar(db, cliente, { dias: 7, agora });
+  await sincronizar(db, cliente, { dias: 7, agora });   // de novo: nada muda
+
+  const mp = db.prepare("SELECT * FROM campaigns WHERE ref_code = 'MP-104'").all();
+  assert.equal(mp.length, 1);
+  assert.equal(mp[0].external_id, '2001', 'o código passou para a campanha da Meta');
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM campaigns WHERE external_id LIKE 'manual:%'").get().n, 0, 'a manual foi absorvida');
+  assert.equal(db.prepare('SELECT campaign_id FROM leads WHERE id = ?').get(lead.id).campaign_id, mp[0].id, 'o lead acompanhou');
+  const linha = funil.listarCampanhas(db).find(c => c.ref_code === 'MP-104');
+  assert.equal(linha.gasto_cents, 2000);
+  assert.equal(linha.leads, 1, 'gasto e lead na mesma linha');
+  assert.equal(db.prepare("SELECT ref_code FROM campaigns WHERE external_id = '2002'").get().ref_code, null);
+
+  // Um lead novo com o código vai direto para a campanha da Meta.
+  const novo = funil.criarLead(db, { ref_code: 'MP-104' });
+  assert.equal(db.prepare('SELECT campaign_id FROM leads WHERE id = ?').get(novo.id).campaign_id, mp[0].id);
+  db.close();
+  fs.rmSync(pasta, { recursive: true, force: true });
+});
+
 test('duas verdades: números da plataforma e da NGD não se misturam', () => {
   const db = openDb(':memory:');
   const c = funil.criarCampanhaManual(db, { name: 'Teste' });
