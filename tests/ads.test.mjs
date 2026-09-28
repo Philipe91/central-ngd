@@ -16,10 +16,10 @@ import { tools } from '../lib/media.mjs';
 test('banco: migrações criam as tabelas e a coleta é idempotente por campanha e dia', () => {
   const db = openDb(':memory:');
   const tabelas = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map(r => r.name);
-  for (const t of ['products', 'product_images', 'ad_accounts', 'campaigns', 'daily_metrics', 'leads', 'lead_events', 'recommendations', 'sync_runs', 'audit_log', 'schema_migrations']) {
+  for (const t of ['products', 'product_images', 'ad_accounts', 'campaigns', 'daily_metrics', 'leads', 'lead_events', 'recommendations', 'sync_runs', 'audit_log', 'schema_migrations', 'sellers']) {
     assert.ok(tabelas.includes(t), 'falta a tabela ' + t);
   }
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 1);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 2, 'uma linha por migração aplicada');
 
   db.prepare("INSERT INTO ad_accounts (platform, external_id) VALUES ('meta', 'act_1')").run();
   db.prepare("INSERT INTO campaigns (ad_account_id, external_id, first_seen, last_seen) VALUES (1, 'c1', '2026-01-01', '2026-01-01')").run();

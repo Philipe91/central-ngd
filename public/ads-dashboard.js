@@ -102,7 +102,7 @@ export function painelDashboard() {
     ${vazio ? `<section class="k-card"><div class="k-empty">${icon('megaphone', { size: 32 })}
         <strong>Nada aconteceu neste período</strong>
         <span>Nenhum lead registrado e nenhum gasto lançado entre ${esc(longa(d.periodo.desde))} e ${esc(longa(d.periodo.ate))}.</span></div></section>`
-      : `<div class="k-grid cols-dash">${evolucao(d)}${funil(d)}</div>${comparacao(d)}`}`;
+      : `<div class="k-grid cols-dash">${evolucao(d)}${funil(d)}</div>${comparacao(d)}${porVendedor(d)}`}`;
 }
 
 /* ---------------- filtros ---------------- */
@@ -258,6 +258,34 @@ function comparacao(d) {
       </tbody></table></div>
     <p class="k-note k-pad">Traço significa que o número não pode ser calculado com segurança, e não zero.
       Campanha sem gasto lançado não tem custo por lead. Clique no título da coluna para ordenar.</p>
+  </section>`;
+}
+
+/* ---------------- resultados por vendedor ---------------- */
+
+// Mesma safra do funil, aberta pelo vendedor do rodízio. Sem coluna de custo de propósito:
+// o gasto é da campanha, e não existe regra honesta para dividir entre quem atendeu.
+function porVendedor(d) {
+  const itens = d.vendedores || [];
+  const nome = v => (v.vendedor ? esc(v.vendedor) : '<span class="k-muted">Sem vendedor</span>');
+  return `<section class="k-card">
+    <div class="k-card-head"><h2 class="k-card-title" title="${esc(NOTA_SAFRA)}">Resultados por vendedor</h2>
+      <span class="k-muted k-body2" title="${esc(NOTA_SAFRA)}">leads nascidos no período e até onde chegaram</span></div>
+    ${itens.length ? `<div class="k-table-scroll"><table class="k-table compact"><thead><tr><th>Vendedor</th>
+        <th class="t-right">Leads</th><th class="t-right">Qualificados</th><th class="t-right">Orçamentos pedidos</th>
+        <th class="t-right">Propostas</th><th class="t-right">Fechados</th><th class="t-right">% qualificados</th></tr></thead>
+      <tbody>${itens.map(v => `<tr>
+        <td class="t-title">${nome(v)}${v.vendedor && !v.cadastrado ? ' <small class="k-muted">(fora da lista)</small>' : ''}</td>
+        <td class="t-right k-num">${fmt(v.leads)}</td>
+        <td class="t-right k-num">${fmt(v.qualificados)}</td>
+        <td class="t-right k-num">${fmt(v.orcamentos)}</td>
+        <td class="t-right k-num">${fmt(v.propostas)}</td>
+        <td class="t-right k-num">${fmt(v.fechados)}</td>
+        <td class="t-right k-num">${esc(porcento(v.pctQualificados))}</td></tr>`).join('')}
+      </tbody></table></div>`
+    : `<div class="k-empty k-chart-empty"><strong>Nenhum vendedor ainda</strong><span>Cadastre os nomes do rodízio na aba Leads, botão "Vendedores".</span></div>`}
+    <p class="k-note k-pad">Só contagens: o investimento é da campanha e não dá para dividir entre vendedores
+      com segurança, então não há custo por vendedor. Quem chegou a uma etapa conta também nas anteriores.</p>
   </section>`;
 }
 

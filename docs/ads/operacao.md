@@ -11,11 +11,11 @@ Atalho **Central NGD** na área de trabalho, depois **Mídia paga** no menu do p
 Para ver o módulo cheio, treinar o uso ou desenhar a interface sem ter conta de anúncios:
 
 ```powershell
-node automation/ads-demo.mjs            # insere 6 produtos, 3 campanhas, 30 dias de gasto e 16 leads
+node automation/ads-demo.mjs            # insere 6 produtos, 3 campanhas, 30 dias de gasto, 16 leads e 2 vendedores
 node automation/ads-demo.mjs --limpar   # remove só o que o script criou
 ```
 
-Tudo que ele cria é marcado: produto com código começando em `DEMO-`, campanha com identificador `demo:` e lead com observação `[demo]`. A limpeza apaga apenas isso, então cadastro real nunca é tocado. Os números são sorteados com semente fixa, então rodar duas vezes dá o mesmo resultado.
+Tudo que ele cria é marcado: produto com código começando em `DEMO-`, campanha com identificador `demo:`, lead com observação `[demo]` e vendedor "Vendedor demo 1/2" marcado como demonstração. A limpeza apaga apenas isso, então cadastro real nunca é tocado. Os números são sorteados com semente fixa, então rodar duas vezes dá o mesmo resultado.
 
 ## A aba Dashboard
 
@@ -39,6 +39,10 @@ Quando os dados vierem do script de demonstração, a Dashboard avisa em faixa a
 3. Monte o anúncio no Gerenciador da Meta usando a imagem quadrada e o link copiado. O painel não cria anúncio. O passo a passo completo, para uma pessoa ou para um agente, está em `docs/ads/criar-anuncio-rascunho.md`; ele termina em rascunho, sem publicar.
 4. **Leads**: quando alguém chamar, registre com o código que veio na mensagem, no formato `[ref MP-001]`. Vá mudando o estágio conforme a conversa anda: Novo lead, Contato iniciado, Qualificado, Orçamento pedido, Proposta enviada, Fechado ou Perdido.
 5. A tela de leads mostra lado a lado o que a Meta atribui e o que a NGD observou.
+
+### Vendedor e rodízio
+
+Com o anúncio MP-104, o site divide os contatos de WhatsApp entre os vendedores (rodízio). A mensagem chega com `[ref MP-104]`, e quem atende registra o lead na aba **Leads** com o código e o próprio nome no campo **Vendedor**. O vendedor também pode ser trocado depois, na própria linha do lead, e a lista pode ser filtrada por vendedor. Os nomes são cadastrados pelo botão **Vendedores**, no alto da lista de leads: a lista começa vazia, renomear leva junto os leads antigos, e tirar alguém da lista não apaga o nome dos leads que já eram dele. Lead sem vendedor é permitido. Na **Dashboard**, o bloco **Resultados por vendedor** mostra quantos leads cada um recebeu e até onde chegaram (qualificados, orçamentos pedidos, propostas, fechados), com a mesma safra do funil e os mesmos filtros de período e campanha. Não há custo por vendedor: o gasto é da campanha e não existe regra segura para dividi-lo.
 
 O anúncio da NGD não vende sozinho: ele capta contato e gera pedido de orçamento. Por isso o painel mede leads, leads qualificados, pedidos de orçamento, propostas e o custo de cada um deles. Valor de venda e receita não aparecem na tela. O estágio "Fechado" existe e não pede valor nenhum.
 

@@ -146,3 +146,65 @@ test('duas verdades: números da plataforma e da NGD não se misturam', () => {
   assert.equal(depois.custos.cpo_ngd, 20000);
   db.close();
 });
+
+test('migração 2: banco antigo ganha o vendedor sem perder lead, e reabrir não repete', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ngd-mig-'));
+  const arquivo = path.join(dir, 'ads.sqlite');
+  // Monta um banco "como era antes": só a migração 1, com um lead já registrado.
+  let db = openDb(arquivo);
+  db.prepare("INSERT INTO leads (created_at, contact_name) VALUES ('2026-01-02T10:00:00.000Z', 'Lead antigo')").run();
+  db.exec(`DROP INDEX idx_leads_seller; ALTER TABLE leads DROP COLUMN seller; DROP TABLE sellers;
+    DELETE FROM schema_migrations WHERE version = 2;`);
+  assert.ok(!db.prepare('PRAGMA table_info(leads)').all().some(c => c.name === 'seller'));
+  db.close();
+
+  db = openDb(arquivo);   // o painel reiniciou: a migração 2 roda sozinha
+  assert.deepEqual(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(r => r.version), [1, 2]);
+  const lead = db.prepare('SELECT * FROM leads').get();
+  assert.equal(lead.contact_name, 'Lead antigo', 'o lead de antes continua lá');
+  assert.equal(lead.seller, '', 'lead antigo fica sem vendedor, e não com nulo');
+  assert.ok(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'idx_leads_seller'").get());
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM sellers').get().n, 0, 'a lista de vendedores começa vazia');
+  db.close();
+
+  db = openDb(arquivo);   // de novo: nada muda e nada quebra
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 2);
+  db.close();
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('vendedores: lista editável, lead com ou sem vendedor, filtro e renomear leva os leads junto', () => {
+  const db = openDb(':memory:');
+  assert.deepEqual(funil.listarVendedores(db), []);
+  const v1 = funil.criarVendedor(db, { name: ' Vendedor 1 ' });
+  funil.criarVendedor(db, { name: 'Vendedor 2' });
+  assert.equal(v1.name, 'Vendedor 1', 'espaço sobrando é cortado');
+  assert.throws(() => funil.criarVendedor(db, { name: 'vendedor 1' }), /já existe/i);
+  assert.throws(() => funil.criarVendedor(db, { name: '' }), /nome/i);
+  assert.throws(() => funil.criarVendedor(db, { name: funil.SEM_VENDEDOR }), /nome/i, 'o hífen é reservado ao filtro');
+
+  const c = funil.criarCampanhaManual(db, { name: 'MP-104 no site' });
+  const a = funil.criarLead(db, { ref_code: c.ref_code, seller: 'vendedor 1' });
+  const b = funil.criarLead(db, { ref_code: c.ref_code, seller: 'Vendedor 2' });
+  const semNinguem = funil.criarLead(db, { ref_code: c.ref_code });
+  assert.equal(a.seller, 'Vendedor 1', 'grava o nome como está na lista');
+  assert.equal(semNinguem.seller, '', 'lead pode ficar sem vendedor');
+  assert.throws(() => funil.criarLead(db, { seller: 'Vendedor 3' }), /não existe vendedor/i, 'erro de digitação não vira vendedor novo');
+
+  assert.equal(funil.atualizarLead(db, semNinguem.id, { seller: 'Vendedor 2' }).seller, 'Vendedor 2');
+  assert.equal(funil.atualizarLead(db, b.id, { seller: '' }).seller, '', 'dá para tirar o vendedor');
+  assert.equal(funil.obterLead(db, b.id).stage, 'lead', 'editar o vendedor não mexe no estágio');
+
+  const ids = filtro => funil.listarLeads(db, { seller: filtro }).map(l => l.id).sort();
+  assert.deepEqual(ids('Vendedor 1'), [a.id]);
+  assert.deepEqual(ids('Vendedor 2'), [semNinguem.id]);
+  assert.deepEqual(ids(funil.SEM_VENDEDOR), [b.id]);
+  assert.equal(funil.listarLeads(db).length, 3, 'sem filtro vêm todos');
+
+  funil.renomearVendedor(db, v1.id, { name: 'Ana' });
+  assert.equal(funil.obterLead(db, a.id).seller, 'Ana', 'renomear leva junto os leads antigos');
+  funil.removerVendedor(db, v1.id);
+  assert.equal(funil.obterLead(db, a.id).seller, 'Ana', 'tirar da lista não apaga o histórico do lead');
+  assert.deepEqual(funil.listarVendedores(db).map(v => v.name), ['Vendedor 2']);
+  db.close();
+});

@@ -267,3 +267,53 @@ test('dashboard: o endpoint só lê, e o arquivo de cálculo não sabe escrever'
     assert.ok(resposta.status >= 400, `${metodo} em /dashboard tinha de ser recusado, veio ${resposta.status}`);
   }
 });
+
+test('dashboard: resultados por vendedor seguem a safra do funil e não inventam custo', () => {
+  const { db, a, b } = semear();
+  db.prepare("INSERT INTO sellers (name, created_at) VALUES ('Vendedor 1', '2026-01-01'), ('Vendedor 2', '2026-01-01'), ('Vendedor 3', '2026-01-01')").run();
+  // Leads de A nascidos no dia 5: o do orçamento e o qualificado ficam com o Vendedor 1, o
+  // que só entrou fica sem ninguém. O de B (funil inteiro) é do Vendedor 2, e o de dezembro
+  // também, para provar que ele não entra na safra de janeiro.
+  const ids = db.prepare('SELECT id FROM leads ORDER BY id').all().map(r => r.id);
+  const marcar = (id, nome) => db.prepare('UPDATE leads SET seller = ? WHERE id = ?').run(nome, id);
+  marcar(ids[0], 'Vendedor 1');
+  marcar(ids[1], 'Vendedor 1');
+  marcar(ids[3], 'Vendedor 2');
+  marcar(ids[4], 'Vendedor 2');
+
+  const d = painel.resumo(db, opcoes());
+  const de = nome => d.vendedores.find(v => v.vendedor === nome);
+  assert.deepEqual(d.vendedores.map(v => v.vendedor), ['Vendedor 1', 'Vendedor 2', 'Vendedor 3', ''],
+    'cadastrados na ordem da lista, e os sem vendedor por último');
+  assert.deepEqual({ ...de('Vendedor 1') }, { vendedor: 'Vendedor 1', leads: 2, qualificados: 2, orcamentos: 1, propostas: 0, fechados: 0, cadastrado: true, pctQualificados: 100 });
+  assert.equal(de('Vendedor 2').leads, 1, 'o lead de dezembro não é da safra de janeiro');
+  assert.equal(de('Vendedor 2').propostas, 1, 'quem fechou passou pela proposta');
+  assert.equal(de('Vendedor 2').fechados, 1);
+  assert.equal(de('Vendedor 3').leads, 0, 'vendedor sem lead aparece com zero');
+  assert.equal(de('Vendedor 3').pctQualificados, null, 'sem lead não há porcentagem');
+  assert.equal(de('').leads, 1);
+  // A soma por vendedor fecha com o funil do período.
+  const soma = chave => d.vendedores.reduce((x, v) => x + v[chave], 0);
+  assert.equal(soma('leads'), d.indicadores.leads);
+  assert.equal(soma('qualificados'), d.indicadores.qualificados);
+  assert.equal(soma('orcamentos'), d.indicadores.orcamentos);
+  // Gasto é da campanha: nenhum custo por vendedor.
+  for (const v of d.vendedores) {
+    for (const campo of ['cpl', 'cpql', 'cpo', 'investido_cents']) assert.equal(v[campo], undefined, 'vendedor não tem ' + campo);
+  }
+
+  // O filtro de campanha vale para o bloco também.
+  const soB = painel.resumo(db, opcoes({ campanha: b }));
+  assert.equal(soB.vendedores.find(v => v.vendedor === 'Vendedor 2').leads, 1);
+  assert.equal(soB.vendedores.find(v => v.vendedor === 'Vendedor 1').leads, 0);
+  assert.equal(soB.vendedores.some(v => v.vendedor === ''), false, 'B não tem lead sem vendedor');
+  const soA = painel.resumo(db, opcoes({ campanha: a }));
+  assert.equal(soA.vendedores.find(v => v.vendedor === 'Vendedor 1').leads, 2);
+
+  // Nome que saiu da lista continua aparecendo, marcado como fora dela.
+  db.prepare("DELETE FROM sellers WHERE name = 'Vendedor 1'").run();
+  const depois = painel.resumo(db, opcoes()).vendedores.find(v => v.vendedor === 'Vendedor 1');
+  assert.equal(depois.leads, 2);
+  assert.equal(depois.cadastrado, false);
+  db.close();
+});

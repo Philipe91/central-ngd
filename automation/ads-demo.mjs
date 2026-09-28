@@ -4,13 +4,13 @@
 // não exporta nada. Nada aqui fala com plataforma: é tudo escrito direto no banco local.
 // Tabelas gravadas em data/ads.sqlite: products (sku, price_cents inteiro), campaigns
 // (ref_code "MP-101"), daily_metrics (campanha + dia "2026-01-02", spend_cents inteiro),
-// leads e lead_events.
+// leads (seller com o nome do vendedor demo), lead_events e sellers (demo = 1).
 //
 // Uso:  node automation/ads-demo.mjs            insere os dados de exemplo
 //       node automation/ads-demo.mjs --limpar   remove só o que este script criou
 //
 // Segurança: tudo que ele cria leva a marca DEMO (sku começa com DEMO-, campanha com
-// external_id demo:, lead com notes começando em [demo]). A limpeza apaga só isso,
+// external_id demo:, lead com notes começando em [demo], vendedor com demo = 1). A limpeza apaga só isso,
 // então dados reais nunca são tocados.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,7 +35,8 @@ if (limpar) {
   const l = db.prepare("DELETE FROM leads WHERE notes LIKE '[demo]%'").run();
   const c = db.prepare("DELETE FROM campaigns WHERE external_id LIKE 'demo:%'").run();
   db.exec("DELETE FROM ad_accounts WHERE external_id = 'act_demo'");
-  console.log(`Removidos: ${p.changes} produtos, ${c.changes} campanhas, ${l.changes} leads de demonstração.`);
+  const v = db.prepare('DELETE FROM sellers WHERE demo = 1').run();
+  console.log(`Removidos: ${p.changes} produtos, ${c.changes} campanhas, ${l.changes} leads e ${v.changes} vendedores de demonstração.`);
   db.close();
   process.exit(0);
 }
@@ -55,6 +56,7 @@ const CAMPANHAS = [
   ['Agro sinalização', 'MP-103', 'LINK_CLICKS', 3000],
 ];
 
+const VENDEDORES = ['Vendedor demo 1', 'Vendedor demo 2'];
 const NOMES = ['Marcos Vieira', 'Paula Andrade', 'Rede Bom Preço', 'Agência Ponto', 'Fazenda Sete Lagoas', 'Camila Prado', 'Distribuidora Sul', 'Eduardo Lima', 'Supermercados Kiru', 'Studio Rosa', 'Construtora Aval', 'Feira Brasil Agro'];
 // Formato de funil de captação: muita gente entra, parte vira conversa, uma fatia pede
 // orçamento. O anúncio não vende, então o fim da fila é pequeno de propósito.
@@ -97,8 +99,14 @@ try {
     }
   }
 
-  const inserirLead = db.prepare(`INSERT INTO leads (created_at, campaign_id, ref_code, source, contact_name, contact_phone, stage, quoted_cents, won_cents, closed_at, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  // Dois vendedores fictícios para o rodízio, marcados demo = 1. Nome com "demo" para
+  // nunca se confundir com os vendedores reais que o dono cadastrar.
+  const inserirVendedor = db.prepare(`INSERT INTO sellers (name, demo, created_at) VALUES (?, 1, ?)
+    ON CONFLICT(name) DO NOTHING`);
+  for (const nome of VENDEDORES) inserirVendedor.run(nome, agora());
+
+  const inserirLead = db.prepare(`INSERT INTO leads (created_at, campaign_id, ref_code, source, contact_name, contact_phone, stage, quoted_cents, won_cents, closed_at, notes, seller)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const inserirEvento = db.prepare('INSERT INTO lead_events (lead_id, at, from_stage, to_stage, note) VALUES (?, ?, ?, ?, ?)');
   let n = 0;
   for (const [estagio, quantidade] of ESTAGIOS) {
@@ -110,7 +118,7 @@ try {
       const r = inserirLead.run(criado, c.id, c.ref_code, ['whatsapp', 'whatsapp', 'site'][n % 3],
         NOMES[n % NOMES.length], '(61) 9' + entre(1000, 9999) + '-' + entre(1000, 9999),
         estagio, orcado, ganho, ['venda', 'perdido'].includes(estagio) ? agora() : null,
-        '[demo] cadastro de demonstração');
+        '[demo] cadastro de demonstração', VENDEDORES[n % VENDEDORES.length]);
       inserirEvento.run(r.lastInsertRowid, criado, null, 'lead', 'Lead registrado');
       // Cada passo cai um ou dois dias depois do anterior, sem passar de hoje. Carimbar
       // tudo com a hora atual empilharia o funil inteiro no último dia do gráfico.
@@ -136,5 +144,6 @@ console.log(`  produtos: ${contar("SELECT COUNT(*) AS n FROM products WHERE sku 
 console.log(`  campanhas: ${contar("SELECT COUNT(*) AS n FROM campaigns WHERE external_id LIKE 'demo:%'")}`);
 console.log(`  dias de métrica: ${contar('SELECT COUNT(*) AS n FROM daily_metrics')}`);
 console.log(`  leads: ${contar("SELECT COUNT(*) AS n FROM leads WHERE notes LIKE '[demo]%'")}`);
+console.log(`  vendedores: ${contar('SELECT COUNT(*) AS n FROM sellers WHERE demo = 1')}`);
 console.log('Para remover tudo isso: node automation/ads-demo.mjs --limpar');
 db.close();

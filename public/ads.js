@@ -2,7 +2,7 @@
 //
 // Importada por: public/app.js, que a registra como a página "Mídia paga".
 // API pública: adsPage(). Consome /api/ads/status, /api/ads/products e
-// /api/ads/products, /api/ads/campaigns, /api/ads/leads. Não lê o módulo de vídeos.
+// /api/ads/products, /api/ads/campaigns, /api/ads/leads e /api/ads/sellers. Não lê o módulo de vídeos.
 // Etapas 1 e 2: catálogo, imagens, campanhas com código de referência e funil de leads.
 // Nenhuma rota escreve em plataforma de anúncio.
 //
@@ -19,12 +19,14 @@ const brl = cents => (cents == null ? '' : (cents / 100).toLocaleString('pt-BR',
 const pct = (parte, todo) => (todo > 0 ? Math.round((parte / todo) * 100) : 0);
 const $ = s => document.querySelector(s);
 
-let dados = { status: null, produtos: [], campanhas: [], leads: [], rotulos: {}, estagios: [], carregando: true, erro: '' };
+let dados = { status: null, produtos: [], campanhas: [], leads: [], vendedores: [], rotulos: {}, estagios: [], carregando: true, erro: '' };
 let ligado = false;
 let formAberto = false;
 let formLead = false;
 let formCampanha = false;
 let formMeta = false;
+let formVendedores = false;
+let filtroVendedor = '';   // '' = todos, '-' = sem vendedor, ou o nome
 let aba = 'dashboard';
 
 async function api(url, options) {
@@ -38,9 +40,9 @@ async function carregar() {
   try {
     const q = new URLSearchParams({ site: 'https://nucleografico.com.br/loja/', whatsapp: '61996490102' });
     const [status, lista, camp, leads] = await Promise.all([
-      api('/api/ads/status'), api('/api/ads/products'), api('/api/ads/campaigns?' + q), api('/api/ads/leads'),
+      api('/api/ads/status'), api('/api/ads/products'), api('/api/ads/campaigns?' + q), api('/api/ads/leads' + (filtroVendedor ? '?' + new URLSearchParams({ seller: filtroVendedor }) : '')),
     ]);
-    dados = { status, produtos: lista.items, campanhas: camp.items, leads: leads.items, rotulos: leads.rotulos, estagios: leads.estagios, carregando: false, erro: '' };
+    dados = { status, produtos: lista.items, campanhas: camp.items, leads: leads.items, vendedores: leads.vendedores || [], rotulos: leads.rotulos, estagios: leads.estagios, carregando: false, erro: '' };
   } catch (error) {
     dados = { ...dados, carregando: false, erro: error.message };
   }
@@ -174,21 +176,54 @@ function painelLeads() {
       <p class="k-note k-pad">Traço significa que o dado não existe ou não pode ser calculado com segurança, e não zero.</p>
     </section>
     <section class="k-card">
-      <div class="k-card-head"><h2 class="k-card-title">Leads</h2><span class="k-muted k-body2">Quem chegou pelo anúncio e em que ponto da conversa está</span></div>
+      <div class="k-card-head"><h2 class="k-card-title">Leads</h2><div class="k-row-tight">
+        <select class="k-select" aria-label="Filtrar por vendedor" data-ads-filtro-vendedor>
+          <option value="">Todos os vendedores</option>${opcoesVendedor(filtroVendedor)}
+          <option value="-" ${filtroVendedor === '-' ? 'selected' : ''}>Sem vendedor</option></select>
+        <button class="k-btn tertiary sm" type="button" data-ads-vendedores>${formVendedores ? 'Fechar vendedores' : 'Vendedores'}</button></div></div>
+      <div class="k-card-body tight"><p class="k-muted k-body2 k-m0">Quem chegou pelo anúncio, quem atendeu e em que ponto da conversa está</p></div>
+      ${formVendedores ? painelVendedores() : ''}
       ${formLead ? `<form class="k-form" id="ads-lead-form"><div class="k-form-grid">
           ${campo('Nome do contato', '<input name="contact_name" maxlength="120" placeholder="Quem chamou">')}
           ${campo('Telefone', '<input name="contact_phone" maxlength="40" placeholder="(61) 90000-0000">')}
           ${campo('Código do anúncio', '<input name="ref_code" maxlength="20" placeholder="MP-001">', 'O [ref] que veio na mensagem')}
+          ${campo('Vendedor', `<select name="seller"><option value="">Sem vendedor</option>${opcoesVendedor('')}</select>`, dados.vendedores.length ? 'Quem atendeu no rodízio do WhatsApp' : 'Cadastre os nomes em "Vendedores", no alto desta lista')}
           ${campo('Origem', '<select name="source"><option value="whatsapp">WhatsApp</option><option value="site">Site</option><option value="balcao">Balcão</option><option value="outro">Outro</option></select>')}
           <div class="k-span-2">${campo('Observação', '<textarea name="notes" rows="2" maxlength="600" placeholder="O que a pessoa pediu."></textarea>')}</div>
         </div><p class="k-error-text" id="ads-lead-error" role="alert"></p>${acoesForm('data-ads-cancelar-lead', 'Salvar lead')}</form>` : ''}
-      ${dados.leads.length ? `<div class="k-table-scroll"><table class="k-table"><thead><tr><th>Contato</th><th>Código</th><th>Campanha</th><th>Estágio</th><th></th></tr></thead><tbody>
+      ${dados.leads.length ? `<div class="k-table-scroll"><table class="k-table"><thead><tr><th>Contato</th><th>Código</th><th>Campanha</th><th>Vendedor</th><th>Estágio</th><th></th></tr></thead><tbody>
         ${dados.leads.map(l => `<tr><td><span class="t-title">${esc(l.contact_name || 'Sem nome')}</span><br><small>${esc(l.contact_phone || '')}</small></td>
           <td><span class="k-code">${esc(l.ref_code || '—')}</span></td><td>${esc(l.campanha || '—')}</td>
+          <td><select class="k-select" aria-label="Vendedor" data-ads-vendedor="${l.id}"><option value="">Sem vendedor</option>${opcoesVendedor(l.seller)}</select></td>
           <td><select class="k-select" aria-label="Estágio" data-ads-estagio="${l.id}">${dados.estagios.map(e => `<option value="${e}" ${l.stage === e ? 'selected' : ''}>${esc(dados.rotulos[e] || e)}</option>`).join('')}</select></td>
           <td class="t-right"><button class="k-iconbtn" type="button" data-ads-remover-lead="${l.id}" title="Remover" aria-label="Remover lead">${icon('delete', { size: 16 })}</button></td></tr>`).join('')}
-      </tbody></table></div>` : `<div class="k-empty">${icon('users', { size: 32 })}<strong>Nenhum lead registrado</strong><span>Quando alguém chamar pelo anúncio, registre aqui com o código que veio na mensagem. É isso que liga a venda ao anúncio.</span><button class="k-btn primary sm" type="button" data-ads-novo-lead>Registrar o primeiro</button></div>`}
+      </tbody></table></div>` : `<div class="k-empty">${icon('users', { size: 32 })}<strong>${filtroVendedor ? 'Nenhum lead com este filtro' : 'Nenhum lead registrado'}</strong><span>Quando alguém chamar pelo anúncio, registre aqui com o código que veio na mensagem. É isso que liga a venda ao anúncio.</span><button class="k-btn primary sm" type="button" data-ads-novo-lead>Registrar o primeiro</button></div>`}
     </section></div>`;
+}
+
+/** Opções do select de vendedor. Nome que saiu da lista mas está no lead continua visível. */
+function opcoesVendedor(atual) {
+  const nomes = dados.vendedores.map(v => v.name);
+  if (atual && atual !== '-' && !nomes.includes(atual)) nomes.push(atual);
+  return nomes.map(n => `<option value="${esc(n)}" ${n === atual ? 'selected' : ''}>${esc(n)}</option>`).join('');
+}
+
+/**
+ * Cadastro dos nomes do rodízio. Começa vazio; o dono escreve os nomes aqui, sem mexer
+ * em código. Renomear leva junto os leads antigos; remover tira só da lista.
+ */
+function painelVendedores() {
+  const itens = dados.vendedores;
+  return `<div class="k-form">
+    ${itens.length ? `<table class="k-table compact"><thead><tr><th>Vendedor</th><th></th></tr></thead><tbody>
+      ${itens.map(v => `<tr><td><input class="k-select" maxlength="60" aria-label="Nome do vendedor" data-ads-nome-vendedor="${v.id}" value="${esc(v.name)}">${v.demo ? ' <span class="k-badge neutral">demo</span>' : ''}</td>
+        <td class="t-right"><div class="k-row-tight"><button class="k-btn tertiary sm" type="button" data-ads-salvar-vendedor="${v.id}">Salvar nome</button>
+          <button class="k-iconbtn" type="button" data-ads-remover-vendedor="${v.id}" title="Remover da lista" aria-label="Remover ${esc(v.name)} da lista">${icon('delete', { size: 16 })}</button></div></td></tr>`).join('')}
+    </tbody></table>` : '<p class="k-note">Nenhum vendedor cadastrado ainda. Escreva o nome de cada um que atende o WhatsApp do site.</p>'}
+    <form id="ads-vend-form"><div class="k-form-grid">
+      ${campo('Novo vendedor', '<input name="name" required maxlength="60" placeholder="Ex.: Vendedor 1">')}
+    </div><p class="k-error-text" id="ads-vend-error" role="alert"></p>${acoesForm('data-ads-vendedores', 'Adicionar')}</form>
+  </div>`;
 }
 
 function painelCatalogo() {
@@ -274,6 +309,17 @@ function ligar() {
       if (aba === 'dashboard') abrirDashboard(desenhar);
       desenhar();
     }
+    if (alvo.hasAttribute('data-ads-vendedores')) { formVendedores = !formVendedores; desenhar(); $('#ads-vend-form')?.elements.name.focus(); }
+    if (d.adsSalvarVendedor) {
+      const campoNome = document.querySelector(`[data-ads-nome-vendedor="${d.adsSalvarVendedor}"]`);
+      try { await api('/api/ads/sellers/' + d.adsSalvarVendedor, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: campoNome?.value || '' }) }); await carregar(); aviso('Nome do vendedor salvo.'); }
+      catch (error) { aviso(error.message); }
+    }
+    if (d.adsRemoverVendedor) {
+      if (!confirm('Tirar este vendedor da lista? Os leads que já estão com ele continuam com o nome.')) return;
+      try { await api('/api/ads/sellers/' + d.adsRemoverVendedor, { method: 'DELETE' }); await carregar(); aviso('Vendedor removido da lista.'); }
+      catch (error) { aviso(error.message); }
+    }
     if (alvo.hasAttribute('data-ads-novo-lead')) { formLead = true; desenhar(); $('#ads-lead-form')?.elements.contact_name.focus(); }
     if (alvo.hasAttribute('data-ads-cancelar-lead')) { formLead = false; desenhar(); }
     if (d.adsCopiar) {
@@ -316,6 +362,13 @@ function ligar() {
   // medido por lead, qualificação e orçamento, e o valor fechado é assunto do comercial.
   main.addEventListener('change', async e => {
     if (dashboardEvento(e.target, desenhar)) return;
+    if (e.target.dataset?.adsFiltroVendedor !== undefined) { filtroVendedor = e.target.value; await carregar(); return; }
+    const lead = e.target.dataset?.adsVendedor;
+    if (lead) {
+      try { await api('/api/ads/leads/' + lead, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seller: e.target.value }) }); await carregar(); }
+      catch (error) { aviso(error.message); await carregar(); }
+      return;
+    }
     const id = e.target.dataset?.adsEstagio;
     if (!id) return;
     const stage = e.target.value;
@@ -353,6 +406,19 @@ function ligar() {
         await carregar();
         aviso('Campanha criada com o código ' + c.ref_code + '. Use os links dela no anúncio.');
       } catch (error) { const p = $('#ads-camp-error'); if (p) p.textContent = error.message; botao.disabled = false; }
+      return;
+    }
+    if (e.target.id === 'ads-vend-form') {
+      e.preventDefault();
+      const form = e.target;
+      const botao = form.querySelector('button.primary');
+      botao.disabled = true;
+      try {
+        const v = await api('/api/ads/sellers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+        await carregar();
+        $('#ads-vend-form')?.elements.name.focus();
+        aviso(v.name + ' entrou na lista de vendedores.');
+      } catch (error) { const p = $('#ads-vend-error'); if (p) p.textContent = error.message; botao.disabled = false; }
       return;
     }
     if (e.target.id === 'ads-lead-form') {
