@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStore, NETWORKS } from './lib/store.mjs';
-import { kindError, isPhoto } from './lib/kinds.mjs';
+import { kindError, isPhoto, hasMedia } from './lib/kinds.mjs';
 import { AUTOMATED, claimJobs, applyResult, applyMetrics, jobsSnapshot, expireStuck, syncStatus, textFor } from './lib/queue.mjs';
 import * as media from './lib/media.mjs';
 import { createTikTokAuth } from './lib/tiktok-auth.mjs';
@@ -45,7 +45,7 @@ const preparing = new Set();
 function prepareContent(id) {
   if (preparing.has(id)) return;
   const c = store.db.contents.find(x => x.id === id);
-  if (!c || (!c.file && !c.images?.length)) return;
+  if (!c || !hasMedia(c)) return;
   if (media.tools().missing.length) { store.change(d => { const x = d.contents.find(y => y.id === id); x.media.state = 'error'; x.media.error = 'Ferramentas de vídeo ausentes. Execute automation/install-tools.ps1.'; }); return; }
   preparing.add(id);
   store.change(d => { const x = d.contents.find(y => y.id === id); x.media.state = 'preparing'; x.media.error = ''; });
@@ -62,7 +62,7 @@ async function preparePhotos(c) {
   for (const [i, img] of c.images.entries()) images.push({ ...img, ...(await media.preparePhoto(path.join(uploadDir, img.file), renditionDir, `${c.id}-${i + 1}`, c.kind)) });
   return { images, media: { rendition: '', thumb: images[0].rendition, width: images[0].width, height: images[0].height, duration: 0, bytes: images.reduce((t, i) => t + i.bytes, 0) } };
 }
-function prepareMissing() { for (const c of store.db.contents) if (c.file && ['pending', 'preparing'].includes(c.media?.state)) prepareContent(c.id); }
+function prepareMissing() { for (const c of store.db.contents) if (hasMedia(c) && ['pending', 'preparing'].includes(c.media?.state)) prepareContent(c.id); }
 
 function contentFields(body, existing) {
   const title = clean(body.title, 160); if (!title) bad('Informe um título para o vídeo.');
@@ -231,7 +231,7 @@ app.post('/api/import', (req, res) => {
   }).catch(error => { store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; x.media.state = 'error'; x.media.error = error.message; if (x.title === 'Importando…') x.title = 'Importação falhou'; store.log(d, 'Falha na importação: ' + error.message); }); });
   res.status(202).json(item);
 });
-app.post('/api/contents/:id/prepare', (req, res) => { const c = findContent(req.params.id); if (!c.file && !c.images?.length) bad('Este conteúdo ainda não tem arquivo de mídia.'); prepareContent(c.id); res.json({ ok: true }); });
+app.post('/api/contents/:id/prepare', (req, res) => { const c = findContent(req.params.id); if (!hasMedia(c)) bad('Este conteúdo ainda não tem arquivo de mídia.'); prepareContent(c.id); res.json({ ok: true }); });
 app.post('/api/contents/:id/retry', (req, res) => {
   const c = findContent(req.params.id); const network = req.body?.network;
   if (!c.channels.includes(network)) bad('Rede inválida.');

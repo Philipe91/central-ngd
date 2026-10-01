@@ -89,3 +89,11 @@ test('preparePhoto respeita a rotação EXIF das fotos de celular (não corta ne
   assert.ok(b2 > 180 && r2 < 90, `embaixo devia ser azul: ${[r2, b2]}`);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+import { hasMedia } from '../lib/kinds.mjs';
+test('hasMedia: conteúdo de fotos também tem mídia para preparar (reinício e "Preparar de novo")', () => {
+  assert.equal(hasMedia({ file: 'v.mp4', images: [] }), true);
+  assert.equal(hasMedia({ file: '', images: [{ file: 'a.jpg' }] }), true);
+  assert.equal(hasMedia({ file: '', images: [] }), false);
+  assert.equal(hasMedia({}), false);
+});
