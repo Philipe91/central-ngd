@@ -58,3 +58,12 @@
 /* Aba Resultados: ícone ao lado do título do cartão do kit. */
 .k-card-title.with-icon{display:flex;align-items:center;gap:8px}
 .k-card-title.with-icon .k-icon{color:var(--k-gray-icon)}
+
+/* Novo conteúdo: tipo (vídeo, imagem, carrossel) e lista de fotos escolhidas. */
+.kind-picker{display:flex;gap:16px;flex-wrap:wrap}
+.kind-picker label{display:flex;align-items:center;gap:6px;margin:0;font-weight:500}
+.channel-picker label.is-disabled{opacity:.45;cursor:not-allowed}
+.photo-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.photo-list li{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:12px}
+.photo-list img{width:56px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #e2e6ea}
+.photo-list span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
