@@ -52,7 +52,7 @@ A saída é manter a cor do kit como identidade (ícones, barras, gráficos, bor
 Arquivos novos, sem tocar no painel atual (index.html, app.js, ads.js, charts.js, style.css e theme.css seguem iguais):
 
 - `public/ui/kit.css`: cores com nome por função e componentes do kit, todos com prefixo `k-` (casca com menu de 256px e barra de busca de 60px, cartão com filtro "Mostrar: … ▾", cartão de item, faixa de dias, barra de progresso, etiqueta 84×22, botões, campo com linha embaixo, tabela de linha 64px, legenda de bolinha vazada, janela, aviso).
-- `public/ui/icons.js`: 41 ícones, 14 KB. Os do kit convertidos do `.penpot`; os que faltavam desenhados na mesma grade 20×20 e traço 1,4px. `icon(nome, {size, label})`.
+- `public/ui/icons.js`: 46 ícones (heart, share, trend, trophy e pie desenhados para a aba Resultados), 14 KB. Os do kit convertidos do `.penpot`; os que faltavam desenhados na mesma grade 20×20 e traço 1,4px. `icon(nome, {size, label})`.
 - `public/ui/charts.js`: área com degradê, linha, colunas com topo arredondado, barras horizontais, rosca de anel fino com número grande no centro, minigráfico e legenda. SVG puro, desenhado na largura real do cartão (o texto fica em 12px de verdade) e redesenhado se ela mudar; balão escuro que segue o mouse. Cores em atributos `fill`/`stroke`, que a CSP permite.
 - `public/kit.html` + `public/ui/kit-demo.js`: a vitrine. Abre em `http://127.0.0.1:3210/kit.html` e mostra Visão geral, Conteúdos, Resultados e Componentes com os dados reais de `/api/state`. Gráficos de tendência usam números de exemplo, com isso escrito na tela, porque a base ainda tem 3 conteúdos.
 

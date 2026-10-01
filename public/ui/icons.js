@@ -45,7 +45,12 @@ const ICONS = {
   'users': [20, '<circle cx="7.5" cy="6.25" r="3.33" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.67 17.5v-1.67a4.17 4.17 0 0 1 4.16-4.16h3.34a4.17 4.17 0 0 1 4.16 4.16v1.67M13.33 2.92a3.33 3.33 0 0 1 0 6.66M18.33 17.5v-1.67a4.17 4.17 0 0 0-2.5-3.81" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
   'filter': [20, '<path d="M2.5 3.33h15l-5.83 7.09v5.41l-3.34 1.67v-7.08L2.5 3.33Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
   'toggle': [20, '<rect x="2.5" y="3.33" width="15" height="13.33" rx=".83" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 3.33v13.33" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="2.5" y="3.33" width="5" height="13.33" rx=".83" fill="currentColor" opacity=".35"/>'],
-  'caret': [10, '<path d="M2 3.5h6L5 7Z" fill="currentColor"/>'],
+  'heart': [20, '<path d="M10 16.67s-6.67-3.9-6.67-8.75A3.75 3.75 0 0 1 10 5.63a3.75 3.75 0 0 1 6.67 2.29c0 4.85-6.67 8.75-6.67 8.75Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>'],
+  'share': [20, '<circle cx="15" cy="4.58" r="2.08" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5" cy="10" r="2.08" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="15.42" r="2.08" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m6.8 11.05 6.4 3.32M13.2 5.63 6.8 8.95" fill="none" stroke="currentColor" stroke-width="1.4"/>'],
+  'trend': [20, '<path d="m2.5 14.17 5-5 3.33 3.33 6.67-6.67M12.5 5.83h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
+  'trophy': [20, '<path d="M6.67 2.5h6.66v5a3.33 3.33 0 0 1-6.66 0v-5ZM6.67 4.17H3.33v1.66a2.5 2.5 0 0 0 2.5 2.5M13.33 4.17h3.34v1.66a2.5 2.5 0 0 1-2.5 2.5M10 10.83v3.34M6.67 17.5h6.66" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
+  'pie': [20, '<path d="M10 2.5v7.5h7.5A7.5 7.5 0 1 1 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12.5 2.92a7.5 7.5 0 0 1 4.58 4.58H12.5V2.92Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>'],
+  'caret': [10,'<path d="M2 3.5h6L5 7Z" fill="currentColor"/>'],
 };
 
 export const ICON_NAMES = Object.keys(ICONS);
