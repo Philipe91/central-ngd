@@ -55,3 +55,6 @@
 .chart .donut-svg{width:var(--donut-size,168px);height:var(--donut-size,168px);stroke:none;fill:none;flex-shrink:0}
 .chart .donut-svg text{fill:var(--ink);stroke:none}
 .chart .donut-svg .donut-caption{fill:var(--muted)}
+/* Aba Resultados: ícone ao lado do título do cartão do kit. */
+.k-card-title.with-icon{display:flex;align-items:center;gap:8px}
+.k-card-title.with-icon .k-icon{color:var(--k-gray-icon)}
