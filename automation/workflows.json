@@ -1721,6 +1721,9 @@
             "fieldToAggregate": [
               {
                 "fieldToAggregate": "id"
+              },
+              {
+                "fieldToAggregate": "error"
               }
             ]
           },
@@ -2264,7 +2267,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('IGF: trabalho').first().json.contentId, network: 'instagram', status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.' }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('IGF: trabalho').first().json.contentId, network: 'instagram', status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.' + ((e => e ? ' Motivo: ' + (e.error_user_msg || e.message || JSON.stringify(e)).slice(0, 300) : '')(($json.error || [])[0])) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {
@@ -2355,6 +2358,9 @@
             "fieldToAggregate": [
               {
                 "fieldToAggregate": "id"
+              },
+              {
+                "fieldToAggregate": "error"
               }
             ]
           },
@@ -2567,7 +2573,7 @@
           "sendBody": true,
           "specifyBody": "json",
           "contentType": "json",
-          "jsonBody": "={{ JSON.stringify({ contentId: $('FBF: trabalho').first().json.contentId, network: 'facebook', status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.' }) }}"
+          "jsonBody": "={{ JSON.stringify({ contentId: $('FBF: trabalho').first().json.contentId, network: 'facebook', status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.' + ((e => e ? ' Motivo: ' + (e.error_user_msg || e.message || JSON.stringify(e)).slice(0, 300) : '')(($json.error || [])[0])) }) }}"
         },
         "credentials": {
           "httpHeaderAuth": {

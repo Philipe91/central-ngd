@@ -57,7 +57,7 @@ const note = (name, position, content, width = 420, height = 220) => ({ id: slug
 const webhook = (name, position, pathName, method = 'POST', responseMode = 'onReceived') => ({ id: slug(name), name, type: 'n8n-nodes-base.webhook', typeVersion: 2, position, webhookId: pathName, parameters: { path: pathName, httpMethod: method, authentication: 'headerAuth', responseMode, options: {} }, credentials: cred('bridge') });
 const switchNode = (name, position, left, keys) => ({ id: slug(name), name, type: 'n8n-nodes-base.switch', typeVersion: 3.2, position, parameters: { mode: 'rules', rules: { values: keys.map(k => ({ conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: k, leftValue: left, rightValue: k, operator: { type: 'string', operation: 'equals' } }], combinator: 'and' }, renameOutput: true, outputKey: k })) }, looseTypeValidation: true, options: {} } });
 const splitOut = (name, position, field) => ({ id: slug(name), name, type: 'n8n-nodes-base.splitOut', typeVersion: 1, position, parameters: { fieldToSplitOut: field, options: {} } });
-const aggregate = (name, position, field) => ({ id: slug(name), name, type: 'n8n-nodes-base.aggregate', typeVersion: 1, position, parameters: { fieldsToAggregate: { fieldToAggregate: [{ fieldToAggregate: field }] }, options: {} } });
+const aggregate = (name, position, fields) => ({ id: slug(name), name, type: 'n8n-nodes-base.aggregate', typeVersion: 1, position, parameters: { fieldsToAggregate: { fieldToAggregate: [].concat(fields).map(f => ({ fieldToAggregate: f })) }, options: {} } });
 const readFile = (name, position, selector) => ({ id: slug(name), name, type: 'n8n-nodes-base.readWriteFile', typeVersion: 1, position, parameters: { fileSelector: selector, options: { dataPropertyName: 'data' } } });
 const connect = (edges) => { const c = {}; for (const [from, to, output = 0] of edges) { c[from] ??= { main: [] }; while (c[from].main.length <= output) c[from].main.push([]); c[from].main[output].push({ node: to, type: 'main', index: 0 }); } return c; };
 const resultBody = (network, extra, job = JOB) => `={{ JSON.stringify({ contentId: ${job}.contentId, network: '${network}', ${extra} }) }}`;
@@ -130,7 +130,7 @@ const publishNodes = [
   ifNode('IGF: é carrossel?', pos(5, 8), "={{ $json.kind === 'carousel' }}"),
   splitOut('IGF: dividir fotos', pos(6, 7.5), 'imageUrls'),
   http('IGF: criar item', pos(7, 7.5), { method: 'POST', url: `=${GRAPH}/{{ ${IGJ}.integrations.igUserId }}/media`, auth: 'meta', body: '={{ JSON.stringify({ image_url: $json.imageUrls, is_carousel_item: true }) }}', timeout: 300000 }),
-  aggregate('IGF: juntar itens', pos(8, 7.5), 'id'),
+  aggregate('IGF: juntar itens', pos(8, 7.5), ['id', 'error']),
   ifNode('IGF: itens ok?', pos(9, 7.5), `={{ ($json.id || []).filter(Boolean).length === ${IGJ}.imageUrls.length }}`),
   http('IGF: criar carrossel', pos(10, 7.5), { method: 'POST', url: `=${GRAPH}/{{ ${IGJ}.integrations.igUserId }}/media`, auth: 'meta', body: `={{ JSON.stringify({ media_type: "CAROUSEL", children: $json.id.join(","), caption: ${IGJ}.text }) }}`, timeout: 300000 }),
   http('IGF: criar imagem', pos(6, 8.5), { method: 'POST', url: `=${GRAPH}/{{ $json.integrations.igUserId }}/media`, auth: 'meta', body: '={{ JSON.stringify({ image_url: $json.imageUrls[0], caption: $json.text }) }}', timeout: 300000 }),
@@ -144,19 +144,19 @@ const publishNodes = [
   ifNode('IGF publicou?', pos(18, 7), '={{ !!$json.permalink && !$json.error }}'),
   panel('Registrar sucesso Instagram fotos', pos(19, 6.5), 'result', resultBody('instagram', "status: 'published', externalId: $json.id, url: $json.permalink", IGJ)),
   panel('Registrar falha Instagram fotos', pos(19, 8.5), 'result', failBody('instagram', IGJ)),
-  panel('Registrar foto recusada Instagram', pos(10, 6.5), 'result', resultBody('instagram', "status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.'", IGJ)),
+  panel('Registrar foto recusada Instagram', pos(10, 6.5), 'result', resultBody('instagram', "status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.' + ((e => e ? ' Motivo: ' + (e.error_user_msg || e.message || JSON.stringify(e)).slice(0, 300) : '')(($json.error || [])[0]))", IGJ)),
 
   // Facebook fotos: cada foto sobe sem publicar e um post único junta todas (vale para 1 foto também)
   setNode('FBF: trabalho', pos(4, 10), [], true),
   splitOut('FBF: dividir fotos', pos(5, 10), 'imageUrls'),
   http('FBF: enviar foto', pos(6, 10), { method: 'POST', url: `=${GRAPH}/{{ ${FBJ}.integrations.pageId }}/photos`, auth: 'meta', body: '={{ JSON.stringify({ url: $json.imageUrls, published: false }) }}', timeout: 300000 }),
-  aggregate('FBF: juntar fotos', pos(7, 10), 'id'),
+  aggregate('FBF: juntar fotos', pos(7, 10), ['id', 'error']),
   ifNode('FBF: fotos ok?', pos(8, 10), `={{ ($json.id || []).filter(Boolean).length === ${FBJ}.imageUrls.length }}`),
   http('FBF: publicar post', pos(9, 9.5), { method: 'POST', url: `=${GRAPH}/{{ ${FBJ}.integrations.pageId }}/feed`, auth: 'meta', body: `={{ JSON.stringify({ message: ${FBJ}.text, attached_media: $json.id.map(id => ({ media_fbid: id })) }) }}`, timeout: 300000 }),
   ifNode('FBF publicou?', pos(10, 9.5), '={{ !!$json.id && !$json.error }}'),
   panel('Registrar sucesso Facebook fotos', pos(11, 9), 'result', resultBody('facebook', "status: 'published', externalId: $json.id, url: 'https://www.facebook.com/' + $json.id", FBJ)),
   panel('Registrar falha Facebook fotos', pos(11, 10.5), 'result', failBody('facebook', FBJ)),
-  panel('Registrar foto recusada Facebook', pos(9, 11), 'result', resultBody('facebook', "status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.'", FBJ)),
+  panel('Registrar foto recusada Facebook', pos(9, 11), 'result', resultBody('facebook', "status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.' + ((e => e ? ' Motivo: ' + (e.error_user_msg || e.message || JSON.stringify(e)).slice(0, 300) : '')(($json.error || [])[0]))", FBJ)),
 ];
 const publish = { id: 'ngdPublishQueue01', name: 'NGD · Publicar fila', active: false, settings, nodes: publishNodes, connections: connect([
   ['A cada 5 minutos', 'Buscar trabalhos vencidos'], ['Publicar agora (painel)', 'Buscar trabalhos vencidos'], ['Executar manualmente', 'Buscar trabalhos vencidos'],

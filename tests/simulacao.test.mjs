@@ -166,3 +166,13 @@ test('fluxo de publicação tem os ramos de fotos e todas as ligações apontam 
   assert.equal(pub.connections['Por rede'].main.length, 6);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('foto recusada mostra o motivo que a Meta devolveu (ex.: token vencido), não só "uma foto não foi aceita"', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ngd-sim-'));
+  execFileSync(process.execPath, [path.join(root, 'automation', 'create-workflows.mjs'), '--simulate'], { env: { ...process.env, NGD_DATA_DIR: dir, NGD_MOCK_URL: 'http://127.0.0.1:1' }, stdio: 'pipe' });
+  const pub = JSON.parse(fs.readFileSync(path.join(dir, 'workflows.simulado.json'), 'utf8')).find(w => w.id === 'ngdPublishQueue01');
+  const no = nome => pub.nodes.find(n => n.name === nome);
+  for (const nome of ['IGF: juntar itens', 'FBF: juntar fotos']) assert.deepEqual(no(nome).parameters.fieldsToAggregate.fieldToAggregate.map(f => f.fieldToAggregate), ['id', 'error'], nome);
+  for (const nome of ['Registrar foto recusada Instagram', 'Registrar foto recusada Facebook']) assert.match(no(nome).parameters.jsonBody, /\$json\.error/, nome);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
