@@ -61,6 +61,18 @@ métricas (views, curtidas, comentários, compartilhamentos)
 
 Cada rede tem também um teste de conexão ("quem sou eu") que o painel dispara e mostra a conta detectada ou o erro devolvido pela plataforma.
 
+### 5.1 Fotos: imagem e carrossel (desde 01/10/2026)
+
+- **Tipos:** além de vídeo, o "Novo conteúdo" aceita **Imagem** (1 foto) e **Carrossel** (2 a 10 fotos, na ordem escolhida). Entrada JPG, PNG ou WebP, até 30 MB por foto.
+- **Redes:** só **Instagram** e **Facebook** (e LinkedIn manual). YouTube e TikTok ficam desativados para foto; o servidor também recusa.
+- **Formato:** a API do Instagram aceita de 4:5 a 1.91:1 e só JPG, e corta o carrossel no formato da primeira foto. Por isso o carrossel sai sempre **1080×1350 (4:5)**, com a foto inteira sobre fundo desfocado quando a proporção é outra. A imagem única mantém a proporção quando ela está nessa faixa. Transparência vira fundo branco.
+- **Instagram:** cria um contêiner por foto (`is_carousel_item`), junta no contêiner `CAROUSEL`, espera processar e publica. Imagem única: um contêiner com `image_url`.
+- **Facebook:** cada foto sobe sem publicar (`published:false`) e um post único na Página junta todas (`attached_media`).
+- **Links:** as fotos são servidas pelo mesmo túnel temporário dos Reels (Instagram e Facebook buscam pela URL).
+- **Uma foto por rede por ciclo:** o n8n junta as fotos num nó Aggregate; para dois carrosséis não se misturarem, o painel entrega no máximo um trabalho de foto por rede a cada 5 minutos. O seguinte sai no ciclo seguinte.
+- **Foto recusada:** se a Meta recusar uma das fotos, o post não sai pela metade; o painel marca falha com o motivo.
+- **Métricas:** a coleta diária pega Instagram; posts de foto do Facebook ficam fora da coleta (o campo usado hoje é de vídeo).
+
 ## 6. Onde ficam as coisas
 
 ```
