@@ -36,6 +36,7 @@ export function createMock({ log = () => {} } = {}) {
     if (p.startsWith('/youtube')) return 'youtube';
     if (p.startsWith('/tiktok')) return 'tiktok';
     if (p.startsWith('/rupload') || /video_reels$/.test(p) || p.endsWith('/me')) return 'facebook';
+    if (/\/(photos|feed)$/.test(p)) return 'facebook';
     if (/\/media(_publish)?$/.test(p)) return 'instagram';
     const m = p.match(/^\/graph\/v[\d.]+\/([^/]+)$/);
     if (m) { const o = estado.objetos.get(m[1]); if (o) return o.rede; return String(req.query.fields || '').includes('username') ? 'instagram' : 'facebook'; }
@@ -117,19 +118,50 @@ export function createMock({ log = () => {} } = {}) {
 
   // ---------- Meta: Instagram Reels ----------
   app.post('/graph/:v/:igUserId/media', async (req, res) => {
-    const url = String(req.body?.video_url || '');
+    const b = req.body || {};
     const id = novoId('igc');
-    const o = { rede: 'instagram', tipo: 'container', consultas: 0, status_code: 'IN_PROGRESS', status: 'In progress', legenda: String(req.body?.caption || '') };
+    const carrossel = b.media_type === 'CAROUSEL';
+    const o = { rede: 'instagram', tipo: b.is_carousel_item ? 'item' : 'container', formato: carrossel ? 'carrossel' : b.image_url ? 'imagem' : 'reel', consultas: 0, status_code: 'IN_PROGRESS', status: 'In progress', legenda: String(b.caption || '') };
     estado.objetos.set(id, o);
-    try { const r = await fetch(url, { signal: AbortSignal.timeout(10000) }); await r.body?.cancel(); o.download = r.ok; o.motivo = r.ok ? '' : `HTTP ${r.status}`; } catch (error) { o.download = false; o.motivo = error.message; }
+    if (carrossel) {
+      const filhos = String(b.children || '').split(',').filter(Boolean);
+      o.download = filhos.length >= 2 && filhos.length <= 10 && filhos.every(f => estado.objetos.get(f)?.tipo === 'item');
+      o.motivo = o.download ? '' : 'children inválidos: precisa de 2 a 10 itens de carrossel';
+    } else {
+      const url = String(b.video_url || b.image_url || '');
+      try { const r = await fetch(url, { signal: AbortSignal.timeout(10000) }); await r.body?.cancel(); o.download = r.ok; o.motivo = r.ok ? '' : `HTTP ${r.status}`; } catch (error) { o.download = false; o.motivo = error.message; }
+    }
     res.json({ id });
   });
   app.post('/graph/:v/:igUserId/media_publish', (req, res) => {
     const c = estado.objetos.get(String(req.query.creation_id || ''));
     if (!c || c.status_code !== 'FINISHED') return res.status(400).json({ error: { message: 'Media ID is not available (simulação).', type: 'OAuthException', code: 9007 } });
     const id = novoId('igm');
-    estado.objetos.set(id, { rede: 'instagram', tipo: 'media', permalink: 'https://www.instagram.com/reel/' + id + '/' });
-    publicar('instagram', id, { url: 'https://www.instagram.com/reel/' + id + '/' });
+    const link = (c.formato === 'reel' ? 'https://www.instagram.com/reel/' : 'https://www.instagram.com/p/') + id + '/';
+    estado.objetos.set(id, { rede: 'instagram', tipo: 'media', permalink: link });
+    publicar('instagram', id, { url: link });
+    res.json({ id });
+  });
+
+  // ---------- Meta: Facebook fotos ----------
+  app.post('/graph/:v/:pageId/photos', async (req, res) => {
+    if (recusado(req)) return res.status(400).json({ error: { message: 'Photo could not be processed (simulação).', type: 'GraphMethodException', code: 324, error_user_msg: 'Foto não aceita (simulação).' } });
+    const url = String(req.body?.url || '');
+    try { const r = await fetch(url, { signal: AbortSignal.timeout(10000) }); await r.body?.cancel(); if (!r.ok) throw new Error('HTTP ' + r.status); }
+    catch (error) { return res.status(400).json({ error: { message: `Could not fetch photo URL (${error.message}) (simulação).`, code: 100 } }); }
+    const id = novoId('fbp');
+    const publicada = req.body?.published !== false;
+    estado.objetos.set(id, { rede: 'facebook', tipo: 'foto', publicada });
+    if (!publicada) return res.json({ id });
+    const post = req.params.pageId + '_' + id;
+    publicar('facebook', post, { fotos: 1, url: 'https://www.facebook.com/' + post });
+    res.json({ id, post_id: post });
+  });
+  app.post('/graph/:v/:pageId/feed', (req, res) => {
+    const anexos = (req.body?.attached_media || []).map(a => String(a.media_fbid || ''));
+    if (!anexos.length || !anexos.every(f => estado.objetos.get(f)?.tipo === 'foto')) return res.status(400).json({ error: { message: 'Invalid attached_media (simulação).', type: 'GraphMethodException', code: 100 } });
+    const id = req.params.pageId + '_' + novoId('');
+    publicar('facebook', id, { fotos: anexos.length, url: 'https://www.facebook.com/' + id });
     res.json({ id });
   });
 

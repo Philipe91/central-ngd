@@ -126,3 +126,29 @@ test('túnel do Instagram usa o endereço fixo em modo simulado, sem cloudflared
   } finally { delete process.env.NGD_SHARE_PUBLIC_URL; stopTunnel(); }
   assert.equal(tunnelStatus(), null);
 });
+
+test('mock publica imagem e carrossel no Instagram e post de fotos no Facebook', async () => {
+  await call('/__mock/limpar', { method: 'POST' });
+  const foto = `${shareBase}/share/ok`;
+  const espera = async id => { let s; for (let i = 0; i < 3; i++) s = await statusIG(id); return s.body.status_code; };
+  const img = await call('/graph/v21.0/17841/media', { method: 'POST', body: { image_url: foto, caption: 'Oi' } });
+  assert.equal(await espera(img.body.id), 'FINISHED');
+  assert.match((await call(`/graph/v21.0/17841/media_publish?creation_id=${img.body.id}`, { method: 'POST' })).body.id, /^igm/);
+  const filhos = [];
+  for (let i = 0; i < 2; i++) filhos.push((await call('/graph/v21.0/17841/media', { method: 'POST', body: { image_url: foto, is_carousel_item: true } })).body.id);
+  const ruim = await call('/graph/v21.0/17841/media', { method: 'POST', body: { media_type: 'CAROUSEL', children: filhos[0], caption: 'x' } });
+  assert.equal(await espera(ruim.body.id), 'ERROR');
+  const car = await call('/graph/v21.0/17841/media', { method: 'POST', body: { media_type: 'CAROUSEL', children: filhos.join(','), caption: 'x' } });
+  assert.equal(await espera(car.body.id), 'FINISHED');
+  const pub = await call(`/graph/v21.0/17841/media_publish?creation_id=${car.body.id}`, { method: 'POST' });
+  assert.match((await call(`/graph/v21.0/${pub.body.id}?fields=permalink`)).body.permalink, /instagram\.com\/p\//);
+  const ids = [];
+  for (let i = 0; i < 2; i++) ids.push((await call('/graph/v21.0/663/photos', { method: 'POST', body: { url: foto, published: false } })).body.id);
+  const feed = await call('/graph/v21.0/663/feed', { method: 'POST', body: { message: 'Oi', attached_media: ids.map(id => ({ media_fbid: id })) } });
+  assert.match(feed.body.id, /^663_/);
+  assert.equal((await call('/graph/v21.0/663/feed', { method: 'POST', body: { message: 'x', attached_media: [{ media_fbid: 'naoexiste' }] } })).status, 400);
+  await modo('facebook', 'recusado');
+  assert.equal((await call('/graph/v21.0/663/photos', { method: 'POST', body: { url: foto, published: false } })).status, 400);
+  await modo('facebook', 'ok');
+  assert.deepEqual((await call('/__mock/estado')).body.publicacoes.map(p => p.rede), ['instagram', 'instagram', 'facebook']);
+});
