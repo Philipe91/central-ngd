@@ -68,3 +68,24 @@ test('fila: foto leva kind e arquivos, pula YouTube e sai uma por rede por ciclo
   assert.equal(db.contents[0].posts.youtube?.status ?? 'pending', 'pending'); // YouTube nunca entra para foto
   assert.deepEqual(claimJobs(db, Date.parse('2026-10-02T00:05:00Z')).map(j => `${j.contentId}:${j.network}`), ['b:instagram', 'b:facebook']);
 });
+
+test('preparePhoto respeita a rotação EXIF das fotos de celular (não corta nem preenche de branco)', { skip: tools().missing.includes('ffmpeg') ? 'ferramentas ausentes' : false }, async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ngd-exif-'));
+  const { ffmpeg } = tools();
+  // 600×300 deitada: metade esquerda vermelha, direita azul. EXIF orientação 6 = girar 90° no sentido horário,
+  // então a foto "de pé" tem 300×600 com vermelho em cima e azul embaixo.
+  const plain = path.join(dir, 'plain.jpg');
+  execFileSync(ffmpeg, ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=red:s=300x300', '-f', 'lavfi', '-i', 'color=c=blue:s=300x300', '-filter_complex', 'hstack', '-frames:v', '1', plain]);
+  const jpg = fs.readFileSync(plain);
+  const payload = Buffer.from([0x45, 0x78, 0x69, 0x66, 0, 0, 0x49, 0x49, 0x2a, 0, 8, 0, 0, 0, 1, 0, 0x12, 0x01, 3, 0, 1, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0]);
+  const app1 = Buffer.concat([Buffer.from([0xff, 0xe1, 0, payload.length + 2]), payload]);
+  const rot = path.join(dir, 'rot6.jpg');
+  fs.writeFileSync(rot, Buffer.concat([jpg.subarray(0, 2), app1, jpg.subarray(2)]));
+  const out = await preparePhoto(rot, dir, 'r-1', 'image');
+  assert.deepEqual([out.width, out.height], [1080, 1350]);
+  const cor = y => [...execFileSync(ffmpeg, ['-loglevel', 'error', '-i', path.join(dir, 'r-1.jpg'), '-vf', `crop=2:2:540:${y}`, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'])].slice(0, 3);
+  const [r1, , b1] = cor(400), [r2, , b2] = cor(1000);
+  assert.ok(r1 > 180 && b1 < 90, `em cima devia ser vermelho: ${[r1, b1]}`);
+  assert.ok(b2 > 180 && r2 < 90, `embaixo devia ser azul: ${[r2, b2]}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
