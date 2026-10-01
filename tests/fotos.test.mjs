@@ -53,3 +53,18 @@ test('preparePhoto gera JPG a partir de PNG transparente e de paisagem', { skip:
   assert.ok(px[0] > 200, `pixel ${px[0]}`);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+import { claimJobs } from '../lib/queue.mjs';
+
+test('fila: foto leva kind e arquivos, pula YouTube e sai uma por rede por ciclo', () => {
+  const foto = id => ({ id, title: id, kind: 'carousel', channels: ['instagram', 'facebook', 'youtube'], scheduledAt: '2026-10-01T00:00:00Z', media: { state: 'ready', rendition: '', thumb: id + '-1.jpg' }, images: [{ rendition: id + '-1.jpg' }, { rendition: id + '-2.jpg' }], posts: {} });
+  const video = { id: 'v', title: 'v', kind: 'video', channels: ['instagram'], scheduledAt: '2026-10-01T00:00:00Z', media: { state: 'ready', rendition: 'v.mp4' }, posts: {} };
+  const db = { contents: [foto('a'), foto('b'), video] };
+  const jobs = claimJobs(db, Date.parse('2026-10-02T00:00:00Z'));
+  assert.deepEqual(jobs.map(j => `${j.contentId}:${j.network}`), ['a:instagram', 'a:facebook', 'v:instagram']);
+  assert.equal(jobs[0].kind, 'carousel'); assert.deepEqual(jobs[0].images, ['a-1.jpg', 'a-2.jpg']);
+  assert.equal(jobs[2].kind, 'video');
+  assert.equal(db.contents[1].posts.instagram?.status ?? 'pending', 'pending'); // "b" fica para o próximo ciclo
+  assert.equal(db.contents[0].posts.youtube?.status ?? 'pending', 'pending'); // YouTube nunca entra para foto
+  assert.deepEqual(claimJobs(db, Date.parse('2026-10-02T00:05:00Z')).map(j => `${j.contentId}:${j.network}`), ['b:instagram', 'b:facebook']);
+});

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStore, NETWORKS } from './lib/store.mjs';
+import { kindError, isPhoto } from './lib/kinds.mjs';
 import { AUTOMATED, claimJobs, applyResult, applyMetrics, jobsSnapshot, expireStuck, syncStatus, textFor } from './lib/queue.mjs';
 import * as media from './lib/media.mjs';
 import { createTikTokAuth } from './lib/tiktok-auth.mjs';
@@ -44,15 +45,22 @@ const preparing = new Set();
 function prepareContent(id) {
   if (preparing.has(id)) return;
   const c = store.db.contents.find(x => x.id === id);
-  if (!c || !c.file) return;
+  if (!c || (!c.file && !c.images?.length)) return;
   if (media.tools().missing.length) { store.change(d => { const x = d.contents.find(y => y.id === id); x.media.state = 'error'; x.media.error = 'Ferramentas de vídeo ausentes. Execute automation/install-tools.ps1.'; }); return; }
   preparing.add(id);
   store.change(d => { const x = d.contents.find(y => y.id === id); x.media.state = 'preparing'; x.media.error = ''; });
-  media.prepare(path.join(uploadDir, c.file), renditionDir, id).then(out => {
-    store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; x.media = { ...x.media, state: 'ready', error: '', ...out }; store.log(d, `Vídeo preparado: ${x.title}`); });
+  const work = isPhoto(c.kind) ? preparePhotos(c) : media.prepare(path.join(uploadDir, c.file), renditionDir, id).then(out => ({ media: out }));
+  work.then(out => {
+    store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; if (out.images) x.images = out.images; x.media = { ...x.media, state: 'ready', error: '', ...out.media }; store.log(d, `Mídia preparada: ${x.title}`); });
   }).catch(error => {
-    store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; x.media.state = 'error'; x.media.error = String(error.stderr || error.message).split('\n').filter(Boolean).slice(-1)[0] || 'Falha ao preparar o vídeo.'; store.log(d, `Falha ao preparar: ${x.title}`); });
+    store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; x.media.state = 'error'; x.media.error = String(error.stderr || error.message).split('\n').filter(Boolean).slice(-1)[0] || 'Falha ao preparar a mídia.'; store.log(d, `Falha ao preparar: ${x.title}`); });
   }).finally(() => preparing.delete(id));
+}
+// Fotos: cada uma vira <id>-<n>.jpg na ordem escolhida; a capa do cartão é a primeira.
+async function preparePhotos(c) {
+  const images = [];
+  for (const [i, img] of c.images.entries()) images.push({ ...img, ...(await media.preparePhoto(path.join(uploadDir, img.file), renditionDir, `${c.id}-${i + 1}`, c.kind)) });
+  return { images, media: { rendition: '', thumb: images[0].rendition, width: images[0].width, height: images[0].height, duration: 0, bytes: images.reduce((t, i) => t + i.bytes, 0) } };
 }
 function prepareMissing() { for (const c of store.db.contents) if (c.file && ['pending', 'preparing'].includes(c.media?.state)) prepareContent(c.id); }
 
@@ -108,11 +116,14 @@ app.post('/api/automation/claim', authenticateBridge, async (req, res, next) => 
       job.integrations = { pageId: integrations.facebook?.pageId || '', igUserId: integrations.instagram?.igUserId || '', privacy: integrations.tiktok?.privacy || 'SELF_ONLY' };
       job.title = job.title.slice(0, job.network === 'youtube' ? 100 : 150);
       if (job.network === 'facebook' && !job.integrations.pageId) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'Informe o ID da Página do Facebook em Redes sociais.' })); continue; }
-      if (job.network === 'instagram') {
-        if (!job.integrations.igUserId) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'Informe o ID da conta do Instagram em Redes sociais.' })); continue; }
+      if (job.network === 'instagram' && !job.integrations.igUserId) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'Informe o ID da conta do Instagram em Redes sociais.' })); continue; }
+      // Instagram (vídeo e foto) e Facebook (foto) buscam a mídia por link público temporário.
+      const photo = isPhoto(job.kind);
+      if (job.network === 'instagram' || (photo && job.network === 'facebook')) {
         try {
           const base = await media.ensureTunnel(SHARE_PORT, path.join(dataDir, 'tunnel.log'));
-          job.publicUrl = base + '/share/' + media.createShareToken(job.fileName, shareSecret());
+          if (photo) job.imageUrls = job.images.map(f => base + '/share/' + media.createShareToken(f, shareSecret()));
+          else job.publicUrl = base + '/share/' + media.createShareToken(job.fileName, shareSecret());
         } catch (error) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'Link temporário indisponível: ' + error.message })); continue; }
       }
       if (job.network === 'tiktok' && job.bytes > 64 * 1024 * 1024) { store.change(d => applyResult(d, { contentId: job.contentId, network: job.network, status: 'failed', error: 'O TikTok recebe até 64 MB por envio nesta versão. Reduza o vídeo.' })); continue; }
@@ -138,7 +149,7 @@ app.post('/api/automation/connection', authenticateBridge, (req, res) => {
   res.json({ ok: true });
 });
 app.get('/api/automation/published', authenticateBridge, async (req, res) => {
-  let items = store.db.contents.flatMap(c => Object.entries(c.posts || {}).filter(([n, p]) => p.status === 'published' && p.externalId && AUTOMATED.includes(n)).map(([n, p]) => ({ contentId: c.id, network: n, externalId: p.externalId, url: p.url, title: c.title })));
+  let items = store.db.contents.flatMap(c => Object.entries(c.posts || {}).filter(([n, p]) => p.status === 'published' && p.externalId && AUTOMATED.includes(n) && !(n === 'facebook' && isPhoto(c.kind))).map(([n, p]) => ({ contentId: c.id, network: n, externalId: p.externalId, url: p.url, title: c.title })));
   if (items.some(i => i.network === 'tiktok')) {
     let tiktokToken = ''; try { tiktokToken = await tiktokAuth.getFreshToken(); } catch {}
     if (!tiktokToken) store.change(d => store.log(d, 'TikTok: coleta de métricas pulada, conta não conectada.'));
@@ -153,10 +164,20 @@ app.post('/api/automation/metrics', authenticateBridge, (req, res) => {
 });
 
 // ---------- Painel ----------
-const upload = multer({ storage: multer.diskStorage({ destination: uploadDir, filename: (req, file, cb) => cb(null, randomUUID() + path.extname(file.originalname).toLowerCase()) }), limits: { fileSize: 500 * 1024 * 1024, files: 1, fields: 12, fieldSize: 20000 }, fileFilter: (req, file, cb) => {
-  if (!['.mp4', '.mov', '.webm'].includes(path.extname(file.originalname).toLowerCase())) return cb(Object.assign(new Error('Envie um vídeo MP4, MOV ou WebM.'), { status: 400 }));
+const VIDEO_EXT = ['.mp4', '.mov', '.webm'], PHOTO_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+const upload = multer({ storage: multer.diskStorage({ destination: uploadDir, filename: (req, file, cb) => cb(null, randomUUID() + path.extname(file.originalname).toLowerCase()) }), limits: { fileSize: 500 * 1024 * 1024, files: 10, fields: 14, fieldSize: 20000 }, fileFilter: (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const ok = file.fieldname === 'video' ? VIDEO_EXT.includes(ext) : file.fieldname === 'images' && PHOTO_EXT.includes(ext);
+  if (!ok) return cb(Object.assign(new Error(file.fieldname === 'images' ? 'Envie fotos JPG, PNG ou WebP.' : 'Envie um vídeo MP4, MOV ou WebM.'), { status: 400 }));
   cb(null, true);
 } });
+// Confere o conteúdo real do arquivo (não só a extensão).
+function sniff(file) {
+  const fd = fs.openSync(file, 'r'); const h = Buffer.alloc(16); fs.readSync(fd, h, 0, 16, 0); fs.closeSync(fd);
+  if (h.toString('ascii', 4, 8) === 'ftyp' || h.readUInt32BE(0) === 0x1a45dfa3) return 'video';
+  if ((h[0] === 0xff && h[1] === 0xd8 && h[2] === 0xff) || h.readUInt32BE(0) === 0x89504e47 || (h.toString('ascii', 0, 4) === 'RIFF' && h.toString('ascii', 8, 12) === 'WEBP')) return 'image';
+  return '';
+}
 app.get('/api/state', (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ ...store.db, runtime: { toolsMissing: media.tools().missing, tunnel: media.tunnelStatus(), cookies: fs.existsSync(cookiesFile), sharePort: SHARE_PORT, tiktok: tiktokAuth.status() } }); });
 // TikTok: chave e segredo entram só por aqui (127.0.0.1); a autorização volta pelo túnel no servidor de compartilhamento.
 app.get('/api/tiktok/status', (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json(tiktokAuth.status()); });
@@ -170,17 +191,32 @@ app.post('/api/tiktok/oauth/start', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 app.post('/api/tiktok/disconnect', (req, res) => { store.change(d => { d.connections.tiktok = { connected: false, account: '', error: 'Desconectado pelo painel.', checkedAt: new Date().toISOString() }; store.log(d, 'TikTok desconectado pelo painel.'); }); res.json(tiktokAuth.disconnect()); });
-app.post('/api/contents', upload.single('video'), (req, res, next) => {
+app.post('/api/contents', upload.fields([{ name: 'video', maxCount: 1 }, { name: 'images', maxCount: 10 }]), (req, res, next) => {
+  const files = [...(req.files?.video || []), ...(req.files?.images || [])];
   try {
-    if (!req.file) bad('Selecione um vídeo.');
+    const kind = clean(req.body.kind, 20) || 'video';
     const fields = contentFields(req.body);
-    const fd = fs.openSync(req.file.path, 'r'); const header = Buffer.alloc(32); fs.readSync(fd, header, 0, 32, 0); fs.closeSync(fd);
-    if (header.toString('ascii', 4, 8) !== 'ftyp' && header.readUInt32BE(0) !== 0x1a45dfa3) bad('O arquivo não é um vídeo MP4, MOV ou WebM compatível.');
-    const item = syncStatus({ id: randomUUID(), ...fields, file: req.file.filename, originalName: clean(req.file.originalname, 200), bytes: req.file.size, createdAt: new Date().toISOString(), source: { type: 'upload', url: '', importedCaption: '' }, media: { state: 'pending', rendition: '', thumb: '', duration: 0, width: 0, height: 0, error: '' } });
-    store.change(d => { d.contents.unshift(item); store.log(d, `Vídeo adicionado: ${item.title}`); });
+    const photos = req.files?.images || [];
+    const erro = kindError(kind, fields.channels, isPhoto(kind) ? photos.length : null);
+    if (erro) bad(erro);
+    const base = { id: randomUUID(), kind, ...fields, createdAt: new Date().toISOString(), source: { type: 'upload', url: '', importedCaption: '' }, media: { state: 'pending', rendition: '', thumb: '', duration: 0, width: 0, height: 0, error: '' } };
+    let item;
+    if (isPhoto(kind)) {
+      if (req.files?.video) bad('Para fotos, não envie vídeo junto.');
+      for (const f of photos) { if (sniff(f.path) !== 'image') bad('Uma das fotos não é um JPG, PNG ou WebP válido.'); if (f.size > 30 * 1024 * 1024) bad('Cada foto deve ter até 30 MB.'); }
+      const images = photos.map(f => ({ file: f.filename, originalName: clean(f.originalname, 200), bytes: f.size, rendition: '', width: 0, height: 0 }));
+      item = syncStatus({ ...base, file: '', images, originalName: images[0].originalName, bytes: images.reduce((t, i) => t + i.bytes, 0) });
+    } else {
+      const f = req.files?.video?.[0];
+      if (!f) bad('Selecione um vídeo.');
+      if (photos.length) bad('Para vídeo, não envie fotos junto.');
+      if (sniff(f.path) !== 'video') bad('O arquivo não é um vídeo MP4, MOV ou WebM compatível.');
+      item = syncStatus({ ...base, file: f.filename, images: [], originalName: clean(f.originalname, 200), bytes: f.size });
+    }
+    store.change(d => { d.contents.unshift(item); store.log(d, `${isPhoto(kind) ? (kind === 'carousel' ? 'Carrossel' : 'Imagem') : 'Vídeo'} adicionado: ${item.title}`); });
     prepareContent(item.id);
     res.status(201).json(item);
-  } catch (error) { if (req.file) fs.rmSync(req.file.path, { force: true }); next(error); }
+  } catch (error) { for (const f of files) fs.rmSync(f.path, { force: true }); next(error); }
 });
 app.post('/api/import', (req, res) => {
   let url; try { url = new URL(clean(req.body?.url, 500)); } catch { bad('Cole o link do vídeo (Instagram, YouTube ou TikTok).'); }
@@ -195,7 +231,7 @@ app.post('/api/import', (req, res) => {
   }).catch(error => { store.change(d => { const x = d.contents.find(y => y.id === id); if (!x) return; x.media.state = 'error'; x.media.error = error.message; if (x.title === 'Importando…') x.title = 'Importação falhou'; store.log(d, 'Falha na importação: ' + error.message); }); });
   res.status(202).json(item);
 });
-app.post('/api/contents/:id/prepare', (req, res) => { const c = findContent(req.params.id); if (!c.file) bad('Este conteúdo ainda não tem arquivo de vídeo.'); prepareContent(c.id); res.json({ ok: true }); });
+app.post('/api/contents/:id/prepare', (req, res) => { const c = findContent(req.params.id); if (!c.file && !c.images?.length) bad('Este conteúdo ainda não tem arquivo de mídia.'); prepareContent(c.id); res.json({ ok: true }); });
 app.post('/api/contents/:id/retry', (req, res) => {
   const c = findContent(req.params.id); const network = req.body?.network;
   if (!c.channels.includes(network)) bad('Rede inválida.');
@@ -234,12 +270,13 @@ app.delete('/api/contents/:id', (req, res) => {
   const c = findContent(req.params.id);
   if (Object.values(c.posts || {}).some(p => p.status === 'queued')) bad('Este conteúdo está sendo publicado agora. Aguarde.');
   store.change(d => { d.contents = d.contents.filter(x => x.id !== c.id); store.log(d, `Conteúdo removido: ${c.title}`); });
-  for (const f of [c.file && path.join(uploadDir, c.file), c.media?.rendition && path.join(renditionDir, c.media.rendition), c.media?.thumb && path.join(renditionDir, c.media.thumb)]) if (f) fs.rmSync(f, { force: true });
+  for (const f of [c.file && path.join(uploadDir, c.file), c.media?.rendition && path.join(renditionDir, c.media.rendition), c.media?.thumb && path.join(renditionDir, c.media.thumb), ...(c.images || []).flatMap(i => [i.file && path.join(uploadDir, i.file), i.rendition && path.join(renditionDir, i.rendition)])]) if (f) fs.rmSync(f, { force: true });
   res.json({ ok: true });
 });
 app.patch('/api/contents/:id', (req, res) => {
   const c = findContent(req.params.id);
   const fields = contentFields(req.body, c);
+  const erro = kindError(c.kind || 'video', fields.channels, null); if (erro) bad(erro);
   store.change(d => { const x = d.contents.find(y => y.id === c.id); Object.assign(x, fields); syncStatus(x); store.log(d, `Conteúdo atualizado: ${fields.title}`); });
   res.json(store.db.contents.find(x => x.id === c.id));
 });
@@ -300,7 +337,7 @@ app.use('/api/ads', adsRouter);
 app.use('/media/prepared', express.static(renditionDir, { dotfiles: 'deny', index: false }));
 app.use('/media', express.static(uploadDir, { dotfiles: 'deny', index: false }));
 app.use(express.static(path.join(root, 'public')));
-app.use((error, req, res, next) => { const status = error instanceof multer.MulterError ? 400 : error.status || 500; if (status >= 500) fs.appendFileSync(path.join(dataDir, 'dashboard-error.log'), `${new Date().toISOString()} ${req.method} ${req.url} ${error.stack || error}\n`); res.status(status).json({ error: error.code === 'LIMIT_FILE_SIZE' ? 'O vídeo deve ter até 500 MB.' : status < 500 ? error.message : 'Não foi possível concluir. Tente novamente.' }); });
+app.use((error, req, res, next) => { const status = error instanceof multer.MulterError ? 400 : error.status || 500; if (status >= 500) fs.appendFileSync(path.join(dataDir, 'dashboard-error.log'), `${new Date().toISOString()} ${req.method} ${req.url} ${error.stack || error}\n`); res.status(status).json({ error: error.code === 'LIMIT_FILE_SIZE' ? 'O arquivo deve ter até 500 MB.' : error.code === 'LIMIT_FILE_COUNT' ? 'Envie no máximo 10 fotos.' : status < 500 ? error.message : 'Não foi possível concluir. Tente novamente.' }); });
 
 // Servidor de compartilhamento: serve só arquivos preparados com token assinado, através do túnel temporário.
 export const shareApp = express();
@@ -311,7 +348,7 @@ shareApp.get('/share/:token', (req, res) => {
   const file = path.join(renditionDir, data.file);
   if (!fs.existsSync(file)) return res.status(404).type('text').send('Arquivo indisponível.');
   res.setHeader('Cache-Control', 'no-store');
-  res.sendFile(file, { dotfiles: 'deny', headers: { 'Content-Type': 'video/mp4' } });
+  res.sendFile(file, { dotfiles: 'deny', headers: { 'Content-Type': /\.jpe?g$/i.test(data.file) ? 'image/jpeg' : 'video/mp4' } });
 });
 // Retorno da autorização do TikTok (passa pelo túnel público): só aceita um state emitido pelo painel, uma vez.
 shareApp.get('/tiktok/callback', async (req, res) => {

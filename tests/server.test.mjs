@@ -119,3 +119,27 @@ test('TikTok: chaves só no arquivo de segredos, retorno exige state válido e a
   assert.ok(!JSON.stringify(published.body).includes('tiktokToken'));
   assert.equal((await request('/api/tiktok/disconnect', { method: 'POST' })).body.connected, false);
 });
+
+test('fotos: carrossel aceita 2–10 JPG/PNG/WebP só na Meta, edição não troca tipo e share serve JPG', async () => {
+  fs.writeFileSync(path.join(temporary, 'automation-secrets.json'), JSON.stringify({ bridgeToken: token }));
+  const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1, 1, 0, 0, 1]);
+  const form = (kind, n, channels, nome = 'f.jpg', corpo = jpg) => { const f = new FormData(); f.append('kind', kind); f.append('title', 'Fotos'); f.append('channels', JSON.stringify(channels)); for (let i = 0; i < n; i++) f.append('images', new Blob([corpo], { type: 'image/jpeg' }), nome); return f; };
+  assert.equal((await request('/api/contents', { method: 'POST', body: form('carousel', 1, ['instagram']) })).status, 400);
+  assert.equal((await request('/api/contents', { method: 'POST', body: form('carousel', 2, ['youtube']) })).status, 400);
+  assert.equal((await request('/api/contents', { method: 'POST', body: form('image', 1, ['instagram'], 'f.jpg', Buffer.from('nao e foto')) })).status, 400);
+  assert.equal((await request('/api/contents', { method: 'POST', body: form('image', 1, ['instagram'], 'f.gif') })).status, 400);
+  const ok = await request('/api/contents', { method: 'POST', body: form('carousel', 3, ['instagram', 'facebook', 'linkedin']) });
+  assert.equal(ok.status, 201); assert.equal(ok.body.kind, 'carousel'); assert.equal(ok.body.images.length, 3); assert.equal(ok.body.file, '');
+  const patch = { title: 'Fotos', caption: '', hashtags: '', channels: ['instagram', 'youtube'], scheduledAt: '' };
+  assert.equal((await request('/api/contents/' + ok.body.id, json('PATCH', patch))).status, 400);
+  const patched = await request('/api/contents/' + ok.body.id, json('PATCH', { ...patch, channels: ['facebook'], kind: 'video' }));
+  assert.equal(patched.status, 200); assert.equal(patched.body.kind, 'carousel');
+  // Servidor de compartilhamento entrega JPG com o tipo certo.
+  const { createShareToken } = await import('../lib/media.mjs');
+  fs.writeFileSync(path.join(temporary, 'renditions', 'teste-1.jpg'), jpg);
+  const r = await fetch(shareBase + '/share/' + createShareToken('teste-1.jpg', token));
+  assert.equal(r.status, 200); assert.equal(r.headers.get('content-type'), 'image/jpeg');
+  // Excluir apaga os originais das fotos.
+  assert.equal((await request('/api/contents/' + ok.body.id, { method: 'DELETE' })).status, 200);
+  for (const img of ok.body.images) assert.ok(!fs.existsSync(path.join(temporary, 'videos', img.file)));
+});
