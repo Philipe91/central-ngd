@@ -57,11 +57,15 @@ const note = (name, position, content, width = 420, height = 220) => ({ id: slug
 const webhook = (name, position, pathName, method = 'POST', responseMode = 'onReceived') => ({ id: slug(name), name, type: 'n8n-nodes-base.webhook', typeVersion: 2, position, webhookId: pathName, parameters: { path: pathName, httpMethod: method, authentication: 'headerAuth', responseMode, options: {} }, credentials: cred('bridge') });
 const switchNode = (name, position, left, keys) => ({ id: slug(name), name, type: 'n8n-nodes-base.switch', typeVersion: 3.2, position, parameters: { mode: 'rules', rules: { values: keys.map(k => ({ conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 }, conditions: [{ id: k, leftValue: left, rightValue: k, operator: { type: 'string', operation: 'equals' } }], combinator: 'and' }, renameOutput: true, outputKey: k })) }, looseTypeValidation: true, options: {} } });
 const splitOut = (name, position, field) => ({ id: slug(name), name, type: 'n8n-nodes-base.splitOut', typeVersion: 1, position, parameters: { fieldToSplitOut: field, options: {} } });
+const aggregate = (name, position, field) => ({ id: slug(name), name, type: 'n8n-nodes-base.aggregate', typeVersion: 1, position, parameters: { fieldsToAggregate: { fieldToAggregate: [{ fieldToAggregate: field }] }, options: {} } });
 const readFile = (name, position, selector) => ({ id: slug(name), name, type: 'n8n-nodes-base.readWriteFile', typeVersion: 1, position, parameters: { fileSelector: selector, options: { dataPropertyName: 'data' } } });
 const connect = (edges) => { const c = {}; for (const [from, to, output = 0] of edges) { c[from] ??= { main: [] }; while (c[from].main.length <= output) c[from].main.push([]); c[from].main[output].push({ node: to, type: 'main', index: 0 }); } return c; };
-const resultBody = (network, extra) => `={{ JSON.stringify({ contentId: ${JOB}.contentId, network: '${network}', ${extra} }) }}`;
+const resultBody = (network, extra, job = JOB) => `={{ JSON.stringify({ contentId: ${job}.contentId, network: '${network}', ${extra} }) }}`;
 // Mensagem de falha legível: erro da plataforma, motivo do TikTok, estado do contêiner do Instagram ou, por último, o JSON bruto.
-const failBody = network => resultBody(network, `status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como "Conta privada" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900)`);
+const failBody = (network, job = JOB) => resultBody(network, `status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como "Conta privada" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900)`, job);
+// Trabalhos de foto: o painel manda no máximo um por rede por ciclo, então .first() é seguro.
+const IGJ = "$('IGF: trabalho').first().json";
+const FBJ = "$('FBF: trabalho').first().json";
 
 // ---------- 1. Verificar conexão do painel (mantido) ----------
 const health = { id: 'ngdLocalHealth01', name: 'NGD · Verificar conexão do painel', active: false, settings, nodes: [
@@ -76,8 +80,8 @@ const publishNodes = [
   { id: 'manual', name: 'Executar manualmente', type: 'n8n-nodes-base.manualTrigger', typeVersion: 1, position: pos(0, 2), parameters: {} },
   panel('Buscar trabalhos vencidos', pos(1, 1), 'claim', '={{ JSON.stringify({ limit: 10 }) }}'),
   splitOut('Dividir trabalhos', pos(2, 1), 'jobs'),
-  switchNode('Por rede', pos(3, 1), '={{ $json.network }}', ['youtube', 'facebook', 'instagram', 'tiktok']),
-  note('Como funciona', [-80, -420], '## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha "NGD · YouTube" e "NGD · Meta". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.', 520, 260),
+  switchNode('Por rede', pos(3, 1), "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}", ['youtube', 'facebook', 'instagram', 'tiktok', 'instagram-fotos', 'facebook-fotos']),
+  note('Como funciona', [-80, -420], '## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos e fotos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha "NGD · YouTube" e "NGD · Meta". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.', 520, 260),
 
   // YouTube
   readFile('Ler vídeo (YouTube)', pos(4, 0), '={{ $json.filePath }}'),
@@ -121,6 +125,38 @@ const publishNodes = [
   switchNode('TT: estado', pos(10, 5.5), '={{ $json.data?.status === "PUBLISH_COMPLETE" ? "ok" : (["PROCESSING_UPLOAD","PROCESSING_DOWNLOAD","SEND_TO_USER_INBOX"].includes($json.data?.status) && $runIndex < 25) ? "wait" : "fail" }}', ['ok', 'wait', 'fail']),
   panel('Registrar sucesso TikTok', pos(11, 5), 'result', resultBody('tiktok', "status: 'published', externalId: String($json.data?.publicaly_available_post_id?.[0] ?? $('TT: iniciar envio').item.json.data.publish_id), url: $json.data?.publicaly_available_post_id?.[0] ? 'https://www.tiktok.com/video/' + $json.data.publicaly_available_post_id[0] : ''")),
   panel('Registrar falha TikTok', pos(11, 6.5), 'result', failBody('tiktok')),
+  // Instagram fotos (imagem única ou carrossel)
+  setNode('IGF: trabalho', pos(4, 8), [], true),
+  ifNode('IGF: é carrossel?', pos(5, 8), "={{ $json.kind === 'carousel' }}"),
+  splitOut('IGF: dividir fotos', pos(6, 7.5), 'imageUrls'),
+  http('IGF: criar item', pos(7, 7.5), { method: 'POST', url: `=${GRAPH}/{{ ${IGJ}.integrations.igUserId }}/media`, auth: 'meta', body: '={{ JSON.stringify({ image_url: $json.imageUrls, is_carousel_item: true }) }}', timeout: 300000 }),
+  aggregate('IGF: juntar itens', pos(8, 7.5), 'id'),
+  ifNode('IGF: itens ok?', pos(9, 7.5), `={{ ($json.id || []).filter(Boolean).length === ${IGJ}.imageUrls.length }}`),
+  http('IGF: criar carrossel', pos(10, 7.5), { method: 'POST', url: `=${GRAPH}/{{ ${IGJ}.integrations.igUserId }}/media`, auth: 'meta', body: `={{ JSON.stringify({ media_type: "CAROUSEL", children: $json.id.join(","), caption: ${IGJ}.text }) }}`, timeout: 300000 }),
+  http('IGF: criar imagem', pos(6, 8.5), { method: 'POST', url: `=${GRAPH}/{{ $json.integrations.igUserId }}/media`, auth: 'meta', body: '={{ JSON.stringify({ image_url: $json.imageUrls[0], caption: $json.text }) }}', timeout: 300000 }),
+  setNode('IGF: contêiner', pos(11, 8), [['containerId', '={{ $json.id || "" }}']]),
+  ifNode('IGF criou?', pos(12, 8), '={{ !!$json.containerId && !$json.error }}'),
+  wait('IGF: aguardar', pos(13, 7.5), 5),
+  http('IGF: consultar estado', pos(14, 7.5), { method: 'GET', url: `=${GRAPH}/{{ $('IGF: contêiner').first().json.containerId }}`, auth: 'meta', query: { fields: 'status_code,status' } }),
+  switchNode('IGF: estado', pos(15, 7.5), '={{ $json.status_code === "FINISHED" ? "ok" : ($json.status_code === "IN_PROGRESS" && $runIndex < 25) ? "wait" : "fail" }}', ['ok', 'wait', 'fail']),
+  http('IGF: publicar', pos(16, 7), { method: 'POST', url: `=${GRAPH}/{{ ${IGJ}.integrations.igUserId }}/media_publish`, auth: 'meta', query: { creation_id: "={{ $('IGF: contêiner').first().json.containerId }}" }, timeout: 300000 }),
+  http('IGF: obter link', pos(17, 7), { method: 'GET', url: `=${GRAPH}/{{ $json.id }}`, auth: 'meta', query: { fields: 'permalink' } }),
+  ifNode('IGF publicou?', pos(18, 7), '={{ !!$json.permalink && !$json.error }}'),
+  panel('Registrar sucesso Instagram fotos', pos(19, 6.5), 'result', resultBody('instagram', "status: 'published', externalId: $json.id, url: $json.permalink", IGJ)),
+  panel('Registrar falha Instagram fotos', pos(19, 8.5), 'result', failBody('instagram', IGJ)),
+  panel('Registrar foto recusada Instagram', pos(10, 6.5), 'result', resultBody('instagram', "status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.'", IGJ)),
+
+  // Facebook fotos: cada foto sobe sem publicar e um post único junta todas (vale para 1 foto também)
+  setNode('FBF: trabalho', pos(4, 10), [], true),
+  splitOut('FBF: dividir fotos', pos(5, 10), 'imageUrls'),
+  http('FBF: enviar foto', pos(6, 10), { method: 'POST', url: `=${GRAPH}/{{ ${FBJ}.integrations.pageId }}/photos`, auth: 'meta', body: '={{ JSON.stringify({ url: $json.imageUrls, published: false }) }}', timeout: 300000 }),
+  aggregate('FBF: juntar fotos', pos(7, 10), 'id'),
+  ifNode('FBF: fotos ok?', pos(8, 10), `={{ ($json.id || []).filter(Boolean).length === ${FBJ}.imageUrls.length }}`),
+  http('FBF: publicar post', pos(9, 9.5), { method: 'POST', url: `=${GRAPH}/{{ ${FBJ}.integrations.pageId }}/feed`, auth: 'meta', body: `={{ JSON.stringify({ message: ${FBJ}.text, attached_media: $json.id.map(id => ({ media_fbid: id })) }) }}`, timeout: 300000 }),
+  ifNode('FBF publicou?', pos(10, 9.5), '={{ !!$json.id && !$json.error }}'),
+  panel('Registrar sucesso Facebook fotos', pos(11, 9), 'result', resultBody('facebook', "status: 'published', externalId: $json.id, url: 'https://www.facebook.com/' + $json.id", FBJ)),
+  panel('Registrar falha Facebook fotos', pos(11, 10.5), 'result', failBody('facebook', FBJ)),
+  panel('Registrar foto recusada Facebook', pos(9, 11), 'result', resultBody('facebook', "status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.'", FBJ)),
 ];
 const publish = { id: 'ngdPublishQueue01', name: 'NGD · Publicar fila', active: false, settings, nodes: publishNodes, connections: connect([
   ['A cada 5 minutos', 'Buscar trabalhos vencidos'], ['Publicar agora (painel)', 'Buscar trabalhos vencidos'], ['Executar manualmente', 'Buscar trabalhos vencidos'],
@@ -130,6 +166,18 @@ const publish = { id: 'ngdPublishQueue01', name: 'NGD · Publicar fila', active:
   ['FB: iniciar envio', 'FB iniciou?'], ['FB iniciou?', 'Ler vídeo (Facebook)', 0], ['FB iniciou?', 'Registrar falha Facebook', 1], ['Ler vídeo (Facebook)', 'FB: enviar arquivo'], ['FB: enviar arquivo', 'FB: concluir e publicar'], ['FB: concluir e publicar', 'FB publicou?'], ['FB publicou?', 'Registrar sucesso Facebook', 0], ['FB publicou?', 'Registrar falha Facebook', 1],
   ['IG: criar contêiner', 'IG criou?'], ['IG criou?', 'IG: aguardar processamento', 0], ['IG criou?', 'Registrar falha Instagram', 1], ['IG: aguardar processamento', 'IG: consultar estado'], ['IG: consultar estado', 'IG: estado'], ['IG: estado', 'IG: publicar', 0], ['IG: estado', 'IG: aguardar processamento', 1], ['IG: estado', 'Registrar falha Instagram', 2], ['IG: publicar', 'IG: obter link'], ['IG: obter link', 'IG publicou?'], ['IG publicou?', 'Registrar sucesso Instagram', 0], ['IG publicou?', 'Registrar falha Instagram', 1],
   ['TT: iniciar envio', 'TT iniciou?'], ['TT iniciou?', 'Ler vídeo (TikTok)', 0], ['TT iniciou?', 'Registrar falha TikTok', 1], ['Ler vídeo (TikTok)', 'TT: enviar arquivo'], ['TT: enviar arquivo', 'TT: aguardar processamento'], ['TT: aguardar processamento', 'TT: consultar estado'], ['TT: consultar estado', 'TT: estado'], ['TT: estado', 'Registrar sucesso TikTok', 0], ['TT: estado', 'TT: aguardar processamento', 1], ['TT: estado', 'Registrar falha TikTok', 2],
+  ['Por rede', 'IGF: trabalho', 4], ['Por rede', 'FBF: trabalho', 5],
+  ['IGF: trabalho', 'IGF: é carrossel?'], ['IGF: é carrossel?', 'IGF: dividir fotos', 0], ['IGF: é carrossel?', 'IGF: criar imagem', 1],
+  ['IGF: dividir fotos', 'IGF: criar item'], ['IGF: criar item', 'IGF: juntar itens'], ['IGF: juntar itens', 'IGF: itens ok?'],
+  ['IGF: itens ok?', 'IGF: criar carrossel', 0], ['IGF: itens ok?', 'Registrar foto recusada Instagram', 1],
+  ['IGF: criar carrossel', 'IGF: contêiner'], ['IGF: criar imagem', 'IGF: contêiner'], ['IGF: contêiner', 'IGF criou?'],
+  ['IGF criou?', 'IGF: aguardar', 0], ['IGF criou?', 'Registrar falha Instagram fotos', 1],
+  ['IGF: aguardar', 'IGF: consultar estado'], ['IGF: consultar estado', 'IGF: estado'],
+  ['IGF: estado', 'IGF: publicar', 0], ['IGF: estado', 'IGF: aguardar', 1], ['IGF: estado', 'Registrar falha Instagram fotos', 2],
+  ['IGF: publicar', 'IGF: obter link'], ['IGF: obter link', 'IGF publicou?'], ['IGF publicou?', 'Registrar sucesso Instagram fotos', 0], ['IGF publicou?', 'Registrar falha Instagram fotos', 1],
+  ['FBF: trabalho', 'FBF: dividir fotos'], ['FBF: dividir fotos', 'FBF: enviar foto'], ['FBF: enviar foto', 'FBF: juntar fotos'], ['FBF: juntar fotos', 'FBF: fotos ok?'],
+  ['FBF: fotos ok?', 'FBF: publicar post', 0], ['FBF: fotos ok?', 'Registrar foto recusada Facebook', 1],
+  ['FBF: publicar post', 'FBF publicou?'], ['FBF publicou?', 'Registrar sucesso Facebook fotos', 0], ['FBF publicou?', 'Registrar falha Facebook fotos', 1],
 ]) };
 
 // ---------- 3. Testar conexão ----------

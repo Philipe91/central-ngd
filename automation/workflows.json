@@ -221,7 +221,7 @@
                   "conditions": [
                     {
                       "id": "youtube",
-                      "leftValue": "={{ $json.network }}",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
                       "rightValue": "youtube",
                       "operator": {
                         "type": "string",
@@ -245,7 +245,7 @@
                   "conditions": [
                     {
                       "id": "facebook",
-                      "leftValue": "={{ $json.network }}",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
                       "rightValue": "facebook",
                       "operator": {
                         "type": "string",
@@ -269,7 +269,7 @@
                   "conditions": [
                     {
                       "id": "instagram",
-                      "leftValue": "={{ $json.network }}",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
                       "rightValue": "instagram",
                       "operator": {
                         "type": "string",
@@ -293,7 +293,7 @@
                   "conditions": [
                     {
                       "id": "tiktok",
-                      "leftValue": "={{ $json.network }}",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
                       "rightValue": "tiktok",
                       "operator": {
                         "type": "string",
@@ -305,6 +305,54 @@
                 },
                 "renameOutput": true,
                 "outputKey": "tiktok"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "instagram-fotos",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
+                      "rightValue": "instagram-fotos",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "instagram-fotos"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "facebook-fotos",
+                      "leftValue": "={{ $json.network + (['image', 'carousel'].includes($json.kind) ? '-fotos' : '') }}",
+                      "rightValue": "facebook-fotos",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "facebook-fotos"
               }
             ]
           },
@@ -322,7 +370,7 @@
           -420
         ],
         "parameters": {
-          "content": "## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha \"NGD · YouTube\" e \"NGD · Meta\". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.",
+          "content": "## NGD · Publicar fila\nA cada 5 minutos (ou quando o painel pede) este fluxo busca no painel os vídeos e fotos vencidos e prontos, publica em cada rede e devolve o link ou o erro.\n\n**Credenciais**: menu Credenciais → preencha \"NGD · YouTube\" e \"NGD · Meta\". O TikTok é conectado no painel (Redes sociais), que manda o token renovado em cada trabalho. Não é preciso editar os nós.\n\nSe uma rede falhar, o painel mostra o erro em Automações e permite tentar de novo.",
           "width": 520,
           "height": 260
         }
@@ -1555,6 +1603,978 @@
             "name": "NGD · comunicação local"
           }
         }
+      },
+      {
+        "id": "igf-trabalho",
+        "name": "IGF: trabalho",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1040,
+          1440
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": []
+          },
+          "includeOtherFields": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-carrossel-",
+        "name": "IGF: é carrossel?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1300,
+          1440
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.kind === 'carousel' }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-dividir-fotos",
+        "name": "IGF: dividir fotos",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          1560,
+          1350
+        ],
+        "parameters": {
+          "fieldToSplitOut": "imageUrls",
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-criar-item",
+        "name": "IGF: criar item",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1820,
+          1350
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('IGF: trabalho').first().json.integrations.igUserId }}/media",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ image_url: $json.imageUrls, is_carousel_item: true }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-juntar-itens",
+        "name": "IGF: juntar itens",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          2080,
+          1350
+        ],
+        "parameters": {
+          "fieldsToAggregate": {
+            "fieldToAggregate": [
+              {
+                "fieldToAggregate": "id"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-itens-ok-",
+        "name": "IGF: itens ok?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2340,
+          1350
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ ($json.id || []).filter(Boolean).length === $('IGF: trabalho').first().json.imageUrls.length }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-criar-carrossel",
+        "name": "IGF: criar carrossel",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2600,
+          1350
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('IGF: trabalho').first().json.integrations.igUserId }}/media",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ media_type: \"CAROUSEL\", children: $json.id.join(\",\"), caption: $('IGF: trabalho').first().json.text }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-criar-imagem",
+        "name": "IGF: criar imagem",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1560,
+          1530
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.integrations.igUserId }}/media",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ image_url: $json.imageUrls[0], caption: $json.text }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-cont-iner",
+        "name": "IGF: contêiner",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2860,
+          1440
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "containerId",
+                "name": "containerId",
+                "value": "={{ $json.id || \"\" }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-criou-",
+        "name": "IGF criou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3120,
+          1440
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.containerId && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-aguardar",
+        "name": "IGF: aguardar",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3380,
+          1350
+        ],
+        "webhookId": "igf-aguardar",
+        "parameters": {
+          "amount": 5,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "igf-consultar-estado",
+        "name": "IGF: consultar estado",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3640,
+          1350
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('IGF: contêiner').first().json.containerId }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "status_code,status"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-estado",
+        "name": "IGF: estado",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          3900,
+          1350
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "ok",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "ok",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "ok"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "wait",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "wait",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "wait"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "fail",
+                      "leftValue": "={{ $json.status_code === \"FINISHED\" ? \"ok\" : ($json.status_code === \"IN_PROGRESS\" && $runIndex < 25) ? \"wait\" : \"fail\" }}",
+                      "rightValue": "fail",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "fail"
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "igf-publicar",
+        "name": "IGF: publicar",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4160,
+          1260
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('IGF: trabalho').first().json.integrations.igUserId }}/media_publish",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "creation_id",
+                "value": "={{ $('IGF: contêiner').first().json.containerId }}"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-obter-link",
+        "name": "IGF: obter link",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4420,
+          1260
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://graph.facebook.com/v21.0/{{ $json.id }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "specifyQuery": "keypair",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "permalink"
+              }
+            ]
+          }
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "igf-publicou-",
+        "name": "IGF publicou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          4680,
+          1260
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.permalink && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-instagram-fotos",
+        "name": "Registrar sucesso Instagram fotos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4940,
+          1170
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('IGF: trabalho').first().json.contentId, network: 'instagram', status: 'published', externalId: $json.id, url: $json.permalink }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-instagram-fotos",
+        "name": "Registrar falha Instagram fotos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4940,
+          1530
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('IGF: trabalho').first().json.contentId, network: 'instagram', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-foto-recusada-instagram",
+        "name": "Registrar foto recusada Instagram",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2600,
+          1170
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('IGF: trabalho').first().json.contentId, network: 'instagram', status: 'failed', error: 'Uma das fotos do carrossel não foi aceita pelo Instagram.' }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "fbf-trabalho",
+        "name": "FBF: trabalho",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1040,
+          1800
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": []
+          },
+          "includeOtherFields": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "fbf-dividir-fotos",
+        "name": "FBF: dividir fotos",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          1300,
+          1800
+        ],
+        "parameters": {
+          "fieldToSplitOut": "imageUrls",
+          "options": {}
+        }
+      },
+      {
+        "id": "fbf-enviar-foto",
+        "name": "FBF: enviar foto",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1560,
+          1800
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('FBF: trabalho').first().json.integrations.pageId }}/photos",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ url: $json.imageUrls, published: false }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "fbf-juntar-fotos",
+        "name": "FBF: juntar fotos",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1820,
+          1800
+        ],
+        "parameters": {
+          "fieldsToAggregate": {
+            "fieldToAggregate": [
+              {
+                "fieldToAggregate": "id"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "fbf-fotos-ok-",
+        "name": "FBF: fotos ok?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2080,
+          1800
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ ($json.id || []).filter(Boolean).length === $('FBF: trabalho').first().json.imageUrls.length }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "fbf-publicar-post",
+        "name": "FBF: publicar post",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2340,
+          1710
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://graph.facebook.com/v21.0/{{ $('FBF: trabalho').first().json.integrations.pageId }}/feed",
+          "options": {
+            "timeout": 300000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ message: $('FBF: trabalho').first().json.text, attached_media: $json.id.map(id => ({ media_fbid: id })) }) }}"
+        },
+        "onError": "continueRegularOutput",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdMetaPage01",
+            "name": "NGD · Meta (token da Página)"
+          }
+        }
+      },
+      {
+        "id": "fbf-publicou-",
+        "name": "FBF publicou?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2600,
+          1710
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ !!$json.id && !$json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        }
+      },
+      {
+        "id": "registrar-sucesso-facebook-fotos",
+        "name": "Registrar sucesso Facebook fotos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2860,
+          1620
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('FBF: trabalho').first().json.contentId, network: 'facebook', status: 'published', externalId: $json.id, url: 'https://www.facebook.com/' + $json.id }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-falha-facebook-fotos",
+        "name": "Registrar falha Facebook fotos",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2860,
+          1890
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('FBF: trabalho').first().json.contentId, network: 'facebook', status: 'failed', error: String([$json.error?.code === 'unaudited_client_can_only_post_to_private_accounts' ? 'TikTok: enquanto o app não é aprovado, a conta precisa estar como \"Conta privada\" (Configurações → Privacidade).' : '', $json.error?.message, $json.error?.error_user_msg, $json.data?.fail_reason, $json.status_code === 'ERROR' ? $json.status : '', typeof $json.error === 'string' ? $json.error : '', JSON.stringify($json)].find(v => v) || 'Falha não informada.').slice(0, 900) }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
+      },
+      {
+        "id": "registrar-foto-recusada-facebook",
+        "name": "Registrar foto recusada Facebook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2340,
+          1980
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://127.0.0.1:3210/api/automation/result",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "neverError": false,
+                "responseFormat": "json",
+                "fullResponse": false
+              }
+            }
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "contentType": "json",
+          "jsonBody": "={{ JSON.stringify({ contentId: $('FBF: trabalho').first().json.contentId, network: 'facebook', status: 'failed', error: 'Uma das fotos não foi aceita pelo Facebook.' }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ngdLocalBridge01",
+            "name": "NGD · comunicação local"
+          }
+        }
       }
     ],
     "connections": {
@@ -1639,6 +2659,20 @@
           [
             {
               "node": "TT: iniciar envio",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IGF: trabalho",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "FBF: trabalho",
               "type": "main",
               "index": 0
             }
@@ -1973,6 +3007,315 @@
           [
             {
               "node": "Registrar falha TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: trabalho": {
+        "main": [
+          [
+            {
+              "node": "IGF: é carrossel?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: é carrossel?": {
+        "main": [
+          [
+            {
+              "node": "IGF: dividir fotos",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IGF: criar imagem",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: dividir fotos": {
+        "main": [
+          [
+            {
+              "node": "IGF: criar item",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: criar item": {
+        "main": [
+          [
+            {
+              "node": "IGF: juntar itens",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: juntar itens": {
+        "main": [
+          [
+            {
+              "node": "IGF: itens ok?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: itens ok?": {
+        "main": [
+          [
+            {
+              "node": "IGF: criar carrossel",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar foto recusada Instagram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: criar carrossel": {
+        "main": [
+          [
+            {
+              "node": "IGF: contêiner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: criar imagem": {
+        "main": [
+          [
+            {
+              "node": "IGF: contêiner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: contêiner": {
+        "main": [
+          [
+            {
+              "node": "IGF criou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF criou?": {
+        "main": [
+          [
+            {
+              "node": "IGF: aguardar",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram fotos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: aguardar": {
+        "main": [
+          [
+            {
+              "node": "IGF: consultar estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: consultar estado": {
+        "main": [
+          [
+            {
+              "node": "IGF: estado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: estado": {
+        "main": [
+          [
+            {
+              "node": "IGF: publicar",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "IGF: aguardar",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram fotos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: publicar": {
+        "main": [
+          [
+            {
+              "node": "IGF: obter link",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF: obter link": {
+        "main": [
+          [
+            {
+              "node": "IGF publicou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IGF publicou?": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso Instagram fotos",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Instagram fotos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: trabalho": {
+        "main": [
+          [
+            {
+              "node": "FBF: dividir fotos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: dividir fotos": {
+        "main": [
+          [
+            {
+              "node": "FBF: enviar foto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: enviar foto": {
+        "main": [
+          [
+            {
+              "node": "FBF: juntar fotos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: juntar fotos": {
+        "main": [
+          [
+            {
+              "node": "FBF: fotos ok?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: fotos ok?": {
+        "main": [
+          [
+            {
+              "node": "FBF: publicar post",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar foto recusada Facebook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF: publicar post": {
+        "main": [
+          [
+            {
+              "node": "FBF publicou?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FBF publicou?": {
+        "main": [
+          [
+            {
+              "node": "Registrar sucesso Facebook fotos",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Registrar falha Facebook fotos",
               "type": "main",
               "index": 0
             }

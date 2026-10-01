@@ -152,3 +152,17 @@ test('mock publica imagem e carrossel no Instagram e post de fotos no Facebook',
   await modo('facebook', 'ok');
   assert.deepEqual((await call('/__mock/estado')).body.publicacoes.map(p => p.rede), ['instagram', 'instagram', 'facebook']);
 });
+
+test('fluxo de publicação tem os ramos de fotos e todas as ligações apontam para nós existentes', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ngd-sim-'));
+  execFileSync(process.execPath, [path.join(root, 'automation', 'create-workflows.mjs'), '--simulate'], { env: { ...process.env, NGD_DATA_DIR: dir, NGD_MOCK_URL: 'http://127.0.0.1:1' }, stdio: 'pipe' });
+  const fluxos = JSON.parse(fs.readFileSync(path.join(dir, 'workflows.simulado.json'), 'utf8'));
+  const pub = fluxos.find(w => w.id === 'ngdPublishQueue01');
+  const nomes = new Set(pub.nodes.map(n => n.name));
+  for (const n of ['IGF: trabalho', 'IGF: criar carrossel', 'IGF: criar imagem', 'IGF: publicar', 'FBF: trabalho', 'FBF: enviar foto', 'FBF: publicar post', 'Registrar sucesso Instagram fotos', 'Registrar sucesso Facebook fotos']) assert.ok(nomes.has(n), n);
+  for (const [de, saida] of Object.entries(pub.connections)) { assert.ok(nomes.has(de), de); for (const ramo of saida.main) for (const l of ramo) assert.ok(nomes.has(l.node), `${de} → ${l.node}`); }
+  const porRede = pub.nodes.find(n => n.name === 'Por rede');
+  assert.deepEqual(porRede.parameters.rules.values.map(v => v.outputKey), ['youtube', 'facebook', 'instagram', 'tiktok', 'instagram-fotos', 'facebook-fotos']);
+  assert.equal(pub.connections['Por rede'].main.length, 6);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
