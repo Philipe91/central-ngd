@@ -100,7 +100,7 @@ function slot(kind, spec) {
 }
 const RENDER = { line: lineChart, bars: barChart };
 
-function lineChart({ labels = [], values = [], name = '', series, unit = '', color = KIT.accent, marker = 'max', title = 'Gráfico', height = 220, width = 400, ticks = 4, fill, linear = false }) {
+function lineChart({ labels = [], values = [], name = '', series, unit = '', color = KIT.accent, marker = 'max', title = 'Gráfico', height = 220, width = 400, ticks = 4, fill, linear = false, tipLabels, tipSuffix = '', xTicks = 4 }) {
   series = norm(series || [{ name, values, color }]);
   if (blank(labels, series)) return emptyChart('Ainda sem dados neste período.');
   const peak = Math.max(...series.flatMap(s => s.values));
@@ -120,12 +120,12 @@ function lineChart({ labels = [], values = [], name = '', series, unit = '', col
   });
   const first = series[0].values;
   const start = marker === 'last' ? first.length - 1 : marker === 'max' ? first.indexOf(Math.max(...first)) : Math.max(0, Math.min(first.length - 1, Number(marker) || 0));
-  const pts = esc(JSON.stringify({ x: labels.map((_, i) => r1(x(i))), y: first.map(v => r1(f.y(v))), lines: labels.map((lb, i) => [lb, ...series.map(s => `${s.name || 'Valor'}: ${fmt(s.values[i])}${unit}`)]), top: f.T, bottom: f.T + f.ih, W: width, start }));
+  const pts = esc(JSON.stringify({ x: labels.map((_, i) => r1(x(i))), y: first.map(v => r1(f.y(v))), lines: labels.map((lb, i) => [tipLabels?.[i] || lb, ...series.map(s => tipSuffix ? `${fmt(s.values[i])} ${tipSuffix}` : `${s.name || 'Valor'}: ${fmt(s.values[i])}${unit}`)]), top: f.T, bottom: f.T + f.ih, W: width, start }));
   const slot = labels.length > 1 ? x(1) - x(0) : f.iw;
   const hit = labels.map((lb, i) => { const left = Math.max(f.L, x(i) - slot / 2), right = Math.min(width - f.R, x(i) + slot / 2); return `<rect class="k-hit" tabindex="0" role="img" aria-label="${esc(lb + ': ' + series.map(s => (s.name || 'Valor') + ' ' + fmt(s.values[i]) + unit).join(', '))}" data-i="${i}" x="${r1(left)}" y="${f.T}" width="${r1(right - left)}" height="${f.ih}"/>`; }).join('');
   const points = labels.length <= 35 ? series.map(s => s.values.map((v, i) => `<circle cx="${r1(x(i))}" cy="${r1(f.y(v))}" r="3" fill="#fff" stroke="${s.color}" stroke-width="1.8"/>`).join('')).join('') : '';
   const tip = `<g class="k-tip" pointer-events="none"><line class="k-guide"/><circle r="5" fill="#fff" stroke="${series[0].color}" stroke-width="2"/><rect class="k-tip-bg" rx="6" height="44" width="46"/><text class="k-tip-text" text-anchor="middle"></text></g>`;
-  return `<svg class="k-chart" viewBox="0 0 ${width} ${height}" role="img" data-chart="line" data-points="${pts}">${summary(title, labels, series, unit)}<defs>${defs}</defs>${f.g}${xLabels(labels, x, height)}${body}${points}${tip}${hit}</svg>`;
+  return `<svg class="k-chart" viewBox="0 0 ${width} ${height}" role="img" data-chart="line" data-points="${pts}">${summary(title, labels, series, unit)}<defs>${defs}</defs>${f.g}${xLabels(labels, x, height, xTicks)}${body}${points}${tip}${hit}</svg>`;
 }
 
 /* bars({ labels, series:[{name, values, color}], unit, title }): colunas com topo de 4px */
