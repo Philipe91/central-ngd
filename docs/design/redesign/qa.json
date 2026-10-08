@@ -1,0 +1,388 @@
+{
+  "errors": [],
+  "blocked": [
+    "/api/n8n/status",
+    "/api/n8n/status",
+    "/api/n8n/status",
+    "/api/n8n/status",
+    "/api/n8n/status"
+  ],
+  "checks": [
+    {
+      "route": "overview",
+      "width": 1366,
+      "overflow": false,
+      "title": "Visão geral",
+      "invalidCharts": false
+    },
+    {
+      "route": "contents",
+      "width": 1366,
+      "overflow": false,
+      "title": "Biblioteca de conteúdos",
+      "invalidCharts": false
+    },
+    {
+      "route": "calendar",
+      "width": 1366,
+      "overflow": false,
+      "title": "Calendário de publicações",
+      "invalidCharts": false
+    },
+    {
+      "route": "networks",
+      "width": 1366,
+      "overflow": false,
+      "title": "Redes sociais",
+      "invalidCharts": false
+    },
+    {
+      "route": "automations",
+      "width": 1366,
+      "overflow": false,
+      "title": "Automações",
+      "invalidCharts": false
+    },
+    {
+      "route": "results",
+      "width": 1366,
+      "overflow": false,
+      "title": "Resultados",
+      "invalidCharts": false
+    },
+    {
+      "route": "midia",
+      "width": 1366,
+      "overflow": false,
+      "title": "Mídia paga",
+      "invalidCharts": false
+    },
+    {
+      "route": "settings",
+      "width": 1366,
+      "overflow": false,
+      "title": "Configurações",
+      "invalidCharts": false
+    },
+    {
+      "route": "overview",
+      "width": 1440,
+      "overflow": false,
+      "title": "Visão geral",
+      "invalidCharts": false
+    },
+    {
+      "route": "contents",
+      "width": 1440,
+      "overflow": false,
+      "title": "Biblioteca de conteúdos",
+      "invalidCharts": false
+    },
+    {
+      "route": "calendar",
+      "width": 1440,
+      "overflow": false,
+      "title": "Calendário de publicações",
+      "invalidCharts": false
+    },
+    {
+      "route": "networks",
+      "width": 1440,
+      "overflow": false,
+      "title": "Redes sociais",
+      "invalidCharts": false
+    },
+    {
+      "route": "automations",
+      "width": 1440,
+      "overflow": false,
+      "title": "Automações",
+      "invalidCharts": false
+    },
+    {
+      "route": "results",
+      "width": 1440,
+      "overflow": false,
+      "title": "Resultados",
+      "invalidCharts": false
+    },
+    {
+      "route": "midia",
+      "width": 1440,
+      "overflow": false,
+      "title": "Mídia paga",
+      "invalidCharts": false
+    },
+    {
+      "route": "settings",
+      "width": 1440,
+      "overflow": false,
+      "title": "Configurações",
+      "invalidCharts": false
+    },
+    {
+      "route": "overview",
+      "width": 1600,
+      "overflow": false,
+      "title": "Visão geral",
+      "invalidCharts": false
+    },
+    {
+      "route": "contents",
+      "width": 1600,
+      "overflow": false,
+      "title": "Biblioteca de conteúdos",
+      "invalidCharts": false
+    },
+    {
+      "route": "calendar",
+      "width": 1600,
+      "overflow": false,
+      "title": "Calendário de publicações",
+      "invalidCharts": false
+    },
+    {
+      "route": "networks",
+      "width": 1600,
+      "overflow": false,
+      "title": "Redes sociais",
+      "invalidCharts": false
+    },
+    {
+      "route": "automations",
+      "width": 1600,
+      "overflow": false,
+      "title": "Automações",
+      "invalidCharts": false
+    },
+    {
+      "route": "results",
+      "width": 1600,
+      "overflow": false,
+      "title": "Resultados",
+      "invalidCharts": false
+    },
+    {
+      "route": "midia",
+      "width": 1600,
+      "overflow": false,
+      "title": "Mídia paga",
+      "invalidCharts": false
+    },
+    {
+      "route": "settings",
+      "width": 1600,
+      "overflow": false,
+      "title": "Configurações",
+      "invalidCharts": false
+    },
+    {
+      "route": "overview",
+      "width": 1920,
+      "overflow": false,
+      "title": "Visão geral",
+      "invalidCharts": false
+    },
+    {
+      "route": "contents",
+      "width": 1920,
+      "overflow": false,
+      "title": "Biblioteca de conteúdos",
+      "invalidCharts": false
+    },
+    {
+      "route": "calendar",
+      "width": 1920,
+      "overflow": false,
+      "title": "Calendário de publicações",
+      "invalidCharts": false
+    },
+    {
+      "route": "networks",
+      "width": 1920,
+      "overflow": false,
+      "title": "Redes sociais",
+      "invalidCharts": false
+    },
+    {
+      "route": "automations",
+      "width": 1920,
+      "overflow": false,
+      "title": "Automações",
+      "invalidCharts": false
+    },
+    {
+      "route": "results",
+      "width": 1920,
+      "overflow": false,
+      "title": "Resultados",
+      "invalidCharts": false
+    },
+    {
+      "route": "midia",
+      "width": 1920,
+      "overflow": false,
+      "title": "Mídia paga",
+      "invalidCharts": false
+    },
+    {
+      "route": "settings",
+      "width": 1920,
+      "overflow": false,
+      "title": "Configurações",
+      "invalidCharts": false
+    },
+    {
+      "route": "overview",
+      "width": 390,
+      "overflow": false,
+      "title": "Visão geral",
+      "invalidCharts": false
+    },
+    {
+      "route": "contents",
+      "width": 390,
+      "overflow": false,
+      "title": "Biblioteca de conteúdos",
+      "invalidCharts": false
+    },
+    {
+      "route": "calendar",
+      "width": 390,
+      "overflow": false,
+      "title": "Calendário de publicações",
+      "invalidCharts": false
+    },
+    {
+      "route": "networks",
+      "width": 390,
+      "overflow": false,
+      "title": "Redes sociais",
+      "invalidCharts": false
+    },
+    {
+      "route": "automations",
+      "width": 390,
+      "overflow": false,
+      "title": "Automações",
+      "invalidCharts": false
+    },
+    {
+      "route": "results",
+      "width": 390,
+      "overflow": false,
+      "title": "Resultados",
+      "invalidCharts": false
+    },
+    {
+      "route": "midia",
+      "width": 390,
+      "overflow": false,
+      "title": "Mídia paga",
+      "invalidCharts": false
+    },
+    {
+      "route": "settings",
+      "width": 390,
+      "overflow": false,
+      "title": "Configurações",
+      "invalidCharts": false
+    },
+    {
+      "action": "novo conteúdo",
+      "open": true
+    },
+    {
+      "action": "carrossel",
+      "photosVisible": true,
+      "multiple": true
+    },
+    {
+      "action": "importação",
+      "open": true
+    },
+    {
+      "action": "filtro draft",
+      "active": "true"
+    },
+    {
+      "action": "filtro planned",
+      "active": "true"
+    },
+    {
+      "action": "filtro published",
+      "active": "true"
+    },
+    {
+      "action": "filtro attention",
+      "active": "true"
+    },
+    {
+      "action": "filtro all",
+      "active": "true"
+    },
+    {
+      "action": "busca",
+      "empty": "Nenhum conteúdo encontrado\n\nAltere a busca ou o filtro para encontrar seu conteúdo."
+    },
+    {
+      "action": "edição",
+      "title": "Editar conteúdo",
+      "valuePresent": true
+    },
+    {
+      "action": "calendário",
+      "restored": true,
+      "days": 42
+    },
+    {
+      "action": "tooltip por teclado",
+      "text": "17/09Visualizações: 1.362"
+    },
+    {
+      "action": "links de resultados",
+      "count": 20
+    },
+    {
+      "action": "mídia dashboard",
+      "loaded": true
+    },
+    {
+      "action": "mídia catalogo",
+      "loaded": true
+    },
+    {
+      "action": "mídia campanhas",
+      "loaded": true
+    },
+    {
+      "action": "mídia leads",
+      "loaded": true
+    },
+    {
+      "action": "formulário catalogo",
+      "visible": true
+    },
+    {
+      "action": "mídia catalogo celular",
+      "overflow": false
+    },
+    {
+      "action": "formulário campanhas",
+      "visible": true
+    },
+    {
+      "action": "mídia campanhas celular",
+      "overflow": false
+    },
+    {
+      "action": "formulário leads",
+      "visible": true
+    },
+    {
+      "action": "mídia leads celular",
+      "overflow": false
+    }
+  ],
+  "posts": 0
+}

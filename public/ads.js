@@ -88,7 +88,7 @@ function corpo() {
   const abas = [['dashboard', 'Dashboard', null], ['catalogo', 'Catálogo', dados.produtos.length], ['campanhas', 'Campanhas e links', dados.campanhas.length], ['leads', 'Leads', dados.leads.length]];
   // Na Dashboard esses números operacionais saem de cena: lá o espaço principal é do
   // desempenho dos anúncios, não da arrumação do catálogo.
-  return `${aba === 'dashboard' ? '' : `<section class="k-card k-kpis" aria-label="Resumo da mídia paga">${kpis.map(([rotulo, ic, valor, barra, cor, nota]) => `
+  return `<div class="page-heading"><div><span class="eyebrow">CAPTAÇÃO NGD</span><h1>Mídia paga</h1><p>Acompanhe leads, contatos qualificados e pedidos de orçamento.</p></div></div>${aba === 'dashboard' ? '' : `<section class="k-card k-kpis" aria-label="Resumo da mídia paga">${kpis.map(([rotulo, ic, valor, barra, cor, nota]) => `
       <div class="k-kpi"><span class="k-kpi-label">${icon(ic, { size: 16 })}${rotulo}</span>
         <strong class="k-num">${valor}</strong>
         ${barra === null ? `<span class="k-badge ${conectada ? 'ok' : 'neutral'}">${conectada ? 'Conectada' : 'Não conectada'}</span>`
@@ -146,7 +146,7 @@ function painelCampanhas() {
           ${campo('Objetivo (opcional)', '<input name="objective" maxlength="60" placeholder="Orçamentos no WhatsApp">')}
         </div><p class="k-error-text" id="ads-camp-error" role="alert"></p>${acoesForm('data-ads-cancelar-campanha', 'Criar campanha')}</form>` : ''}
       ${itens.length ? `<div class="k-table-scroll"><table class="k-table"><thead><tr><th>Código</th><th>Campanha</th><th class="t-right">Gasto</th><th class="t-right">Leads plataforma</th><th class="t-right">Leads NGD</th><th class="t-right">Qualificados</th><th class="t-right">Orçamentos</th><th>Links</th></tr></thead><tbody>
-        ${itens.map(c => `<tr><td><span class="k-code">${esc(c.ref_code || '—')}</span></td><td class="t-title">${esc(c.name)}</td>
+        ${itens.map(c => `<tr><td><button class="k-code k-code-button" type="button" data-ads-copiar="${esc(c.ref_code || '')}" aria-label="Copiar código ${esc(c.ref_code || '')}">${esc(c.ref_code || '—')}</button></td><td class="t-title">${esc(c.name)}</td>
           <td class="t-right k-num">${c.gasto_cents ? brl(c.gasto_cents) : '—'}</td><td class="t-right k-num">${c.leads_plataforma || '—'}</td>
           <td class="t-right k-num">${c.leads || 0}</td><td class="t-right k-num">${c.qualificados || 0}</td><td class="t-right k-num">${c.orcamentos || 0}</td>
           <td><div class="k-row-tight">${c.links?.whatsapp ? `<button class="k-btn tertiary sm" type="button" data-ads-copiar="${esc(c.links.whatsapp)}">${icon('link', { size: 16 })} WhatsApp</button>` : ''}
@@ -161,7 +161,7 @@ function painelLeads() {
   const linha = (titulo, plataforma, ngd) => `<tr><td>${titulo}</td><td class="t-right k-num">${plataforma}</td><td class="t-right k-num"><strong>${ngd}</strong></td></tr>`;
   return `<div class="k-grid cols-leads">
     <section class="k-card">
-      <div class="k-card-head"><h2 class="k-card-title">As duas contas do mesmo jogo</h2></div>
+      <div class="k-card-head"><h2 class="k-card-title">Funil de captação</h2></div>
       <div class="k-card-body tight"><p class="k-muted k-body2 k-m0">O que a plataforma atribui e o que a NGD viu acontecer. Os dois números não se somam.</p></div>
       <table class="k-table compact"><thead><tr><th></th><th class="t-right">Diz a plataforma</th><th class="t-right">Viu a NGD</th></tr></thead><tbody>
         ${linha('Leads', f.plataforma?.leads ?? 0, f.ngd?.leads ?? 0)}

@@ -1,11 +1,11 @@
-/* Gráficos no desenho do SaaS Dashboard UI Kit, em SVG puro, sem biblioteca e sem rede.
+/* Gráficos da Central NGD, em SVG puro, sem biblioteca e sem rede.
 
    area(opts)   curva suave com degradê embaixo, grade tracejada, balão escuro no ponto (cartão "Deals")
    line(opts)   mesma grade, várias séries sem preenchimento; { linear: true } liga reta de
                 ponto a ponto, para série de contagem inteira
    bars(opts)   colunas agrupadas com topo arredondado, mesma grade
    hbars(items) barras horizontais com rótulo e valor (ranking)
-   donut(opts)  anel fino de 8px com o número grande e colorido no centro (cartão "Tasks")
+   donut(opts)  distribuição por rede com total central e legenda nas páginas
    spark(vals)  linha mínima para dentro de números
    legend(items,{row}) bolinha vazada + rótulo (+ valor)
    wire(root)   depois de inserir o HTML: desenha area/line/bars na largura real do cartão (e de novo
@@ -13,7 +13,7 @@
 
    Cores vão em atributos fill/stroke do SVG, que a CSP (style-src 'self') permite; style="" não. */
 
-export const KIT = { accent:'#109bf0', green:'#2ed47a', yellow:'#ffb946', purple:'#885af8', red:'#f7685b', ink:'#192a3e', grid:'#d3d8dd', axis:'#c2cfe0', track:'#ebeff2' };
+export const KIT = { accent:'#2872cb', green:'#338362', yellow:'#bd852a', purple:'#8562ab', red:'#c24c58', ink:'#182e49', grid:'#e2e8f0', axis:'#cbd5e2', track:'#edf1f6' };
 export const SERIES = [KIT.accent, KIT.green, KIT.yellow, KIT.purple, KIT.red];
 
 const nf = new Intl.NumberFormat('pt-BR');
@@ -25,8 +25,11 @@ let uid = 0;
 // escala "redonda" para o eixo: 0, 50, 100, 150, 200 como no kit
 function niceMax(max, ticks) {
   if (max <= 0) return ticks;
-  const raw = max / ticks, mag = 10 ** Math.floor(Math.log10(raw));
-  return [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) * ticks;
+  // Até 15% de respiro, com passos inteiros para contagens pequenas.
+  if (max <= ticks) return ticks;
+  const raw = max * 1.08 / ticks, mag = 10 ** (Math.floor(Math.log10(raw)) - 1);
+  const step = Math.max(1, Math.ceil(raw / mag) * mag);
+  return step * ticks;
 }
 
 // curva monotônica: não inventa pico nem vale entre dois pontos reais
@@ -52,7 +55,7 @@ function poly(pts) {
 
 // grade tracejada #d3d8dd, linha de base #c2cfe0, números do eixo em #4c5862 (via CSS)
 function grid({ max, W, H, ticks }) {
-  const L = 40, R = 8, T = 12, B = 30, iw = W - L - R, ih = H - T - B;
+  const L = Math.max(40, fmt(max).length * 7 + 14), R = 12, T = 18, B = 32, iw = W - L - R, ih = H - T - B;
   const y = v => T + ih - (v / max) * ih;
   let g = '';
   for (let t = 0; t <= ticks; t++) {
@@ -100,7 +103,9 @@ const RENDER = { line: lineChart, bars: barChart };
 function lineChart({ labels = [], values = [], name = '', series, unit = '', color = KIT.accent, marker = 'max', title = 'Gráfico', height = 220, width = 400, ticks = 4, fill, linear = false }) {
   series = norm(series || [{ name, values, color }]);
   if (blank(labels, series)) return emptyChart('Ainda sem dados neste período.');
-  const max = niceMax(Math.max(...series.flatMap(s => s.values)), ticks);
+  const peak = Math.max(...series.flatMap(s => s.values));
+  ticks = Math.min(ticks, Math.max(1, Math.ceil(peak)));
+  const max = niceMax(peak, ticks);
   const f = grid({ max, W: width, H: height, ticks });
   const x = i => f.L + (labels.length < 2 ? f.iw / 2 : (i / (labels.length - 1)) * f.iw);
   const id = 'kc' + (++uid);
@@ -115,18 +120,21 @@ function lineChart({ labels = [], values = [], name = '', series, unit = '', col
   });
   const first = series[0].values;
   const start = marker === 'last' ? first.length - 1 : marker === 'max' ? first.indexOf(Math.max(...first)) : Math.max(0, Math.min(first.length - 1, Number(marker) || 0));
-  const pts = esc(JSON.stringify({ x: labels.map((_, i) => r1(x(i))), y: first.map(v => r1(f.y(v))), v: first.map(v => fmt(v) + unit), top: f.T, bottom: f.T + f.ih, W: width, start }));
+  const pts = esc(JSON.stringify({ x: labels.map((_, i) => r1(x(i))), y: first.map(v => r1(f.y(v))), lines: labels.map((lb, i) => [lb, ...series.map(s => `${s.name || 'Valor'}: ${fmt(s.values[i])}${unit}`)]), top: f.T, bottom: f.T + f.ih, W: width, start }));
   const slot = labels.length > 1 ? x(1) - x(0) : f.iw;
-  const hit = labels.map((_, i) => `<rect class="k-hit" data-i="${i}" x="${r1(x(i) - slot / 2)}" y="${f.T}" width="${r1(slot)}" height="${f.ih}"/>`).join('');
-  const tip = `<g class="k-tip" pointer-events="none"><line class="k-guide"/><circle r="5" fill="#fff" stroke="${series[0].color}" stroke-width="2"/><rect class="k-tip-bg" rx="12" height="24" width="46"/><text class="k-tip-text" text-anchor="middle"></text></g>`;
-  return `<svg class="k-chart" viewBox="0 0 ${width} ${height}" role="img" data-chart="line" data-points="${pts}">${summary(title, labels, series, unit)}<defs>${defs}</defs>${f.g}${xLabels(labels, x, height)}${body}${tip}${hit}</svg>`;
+  const hit = labels.map((lb, i) => { const left = Math.max(f.L, x(i) - slot / 2), right = Math.min(width - f.R, x(i) + slot / 2); return `<rect class="k-hit" tabindex="0" role="img" aria-label="${esc(lb + ': ' + series.map(s => (s.name || 'Valor') + ' ' + fmt(s.values[i]) + unit).join(', '))}" data-i="${i}" x="${r1(left)}" y="${f.T}" width="${r1(right - left)}" height="${f.ih}"/>`; }).join('');
+  const points = labels.length <= 35 ? series.map(s => s.values.map((v, i) => `<circle cx="${r1(x(i))}" cy="${r1(f.y(v))}" r="3" fill="#fff" stroke="${s.color}" stroke-width="1.8"/>`).join('')).join('') : '';
+  const tip = `<g class="k-tip" pointer-events="none"><line class="k-guide"/><circle r="5" fill="#fff" stroke="${series[0].color}" stroke-width="2"/><rect class="k-tip-bg" rx="6" height="44" width="46"/><text class="k-tip-text" text-anchor="middle"></text></g>`;
+  return `<svg class="k-chart" viewBox="0 0 ${width} ${height}" role="img" data-chart="line" data-points="${pts}">${summary(title, labels, series, unit)}<defs>${defs}</defs>${f.g}${xLabels(labels, x, height)}${body}${points}${tip}${hit}</svg>`;
 }
 
 /* bars({ labels, series:[{name, values, color}], unit, title }): colunas com topo de 4px */
 function barChart({ labels = [], series = [], unit = '', title = 'Gráfico de colunas', height = 220, width = 400, ticks = 4 }) {
   series = norm(series);
   if (blank(labels, series)) return emptyChart('Ainda sem dados neste período.');
-  const max = niceMax(Math.max(...series.flatMap(s => s.values)), ticks);
+  const peak = Math.max(...series.flatMap(s => s.values));
+  ticks = Math.min(ticks, Math.max(1, Math.ceil(peak)));
+  const max = niceMax(peak, ticks);
   const f = grid({ max, W: width, H: height, ticks });
   const slot = f.iw / labels.length, gap = 4, bw = Math.max(4, Math.min(14, (slot * 0.6 - gap * (series.length - 1)) / series.length));
   const cx = i => f.L + slot * i + slot / 2, base = f.T + f.ih;
@@ -199,15 +207,28 @@ function tips(root) {
   root.querySelectorAll('svg[data-chart=line]').forEach(svg => {
     const d = JSON.parse(svg.dataset.points), [guide, dot, bg, txt] = svg.querySelector('.k-tip').children;
     const show = i => {
-      const x = d.x[i], y = d.y[i], w = Math.max(40, d.v[i].length * 7 + 18);
+      const lines = d.lines[i];
+      const x = d.x[i], y = d.y[i], w = Math.min(d.W - 16, Math.max(120, ...lines.map(line => line.length * 6.5 + 24)));
+      const height = 12 + lines.length * 16;
       guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('y1', d.top); guide.setAttribute('y2', d.bottom);
       dot.setAttribute('cx', x); dot.setAttribute('cy', y);
-      let bx = x + 10; if (bx + w > d.W) bx = x - 10 - w;
-      bg.setAttribute('width', w); bg.setAttribute('x', bx); bg.setAttribute('y', y - 12);
-      txt.textContent = d.v[i]; txt.setAttribute('x', bx + w / 2); txt.setAttribute('y', y + 4);
+      const bx = Math.max(8, Math.min(d.W - w - 8, x - w / 2));
+      const by = Math.max(2, y - height - 12);
+      bg.setAttribute('width', w); bg.setAttribute('height', height); bg.setAttribute('x', bx); bg.setAttribute('y', by);
+      txt.replaceChildren();
+      lines.forEach((value, row) => {
+        const span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        span.textContent = value; span.setAttribute('x', bx + w / 2); span.setAttribute('y', by + 16 + row * 16);
+        if (value.length * 6 > w - 20) { span.setAttribute('textLength', w - 20); span.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+        txt.appendChild(span);
+      });
     };
     show(d.start);
-    svg.querySelectorAll('.k-hit').forEach(h => h.addEventListener('mouseenter', () => show(+h.dataset.i)));
+    svg.querySelectorAll('.k-hit').forEach(h => {
+      h.addEventListener('mouseenter', () => show(+h.dataset.i));
+      h.addEventListener('focus', () => show(+h.dataset.i));
+      h.addEventListener('pointerdown', () => show(+h.dataset.i));
+    });
     svg.addEventListener('mouseleave', () => show(d.start));
   });
 }

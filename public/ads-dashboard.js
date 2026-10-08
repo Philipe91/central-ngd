@@ -181,7 +181,7 @@ function evolucao(d) {
     { label: 'Qualificados', color: CORES.qualificados },
     { label: 'Pedidos de orçamento', color: CORES.orcamentos },
   ], { row: true })}
-      ${line({ labels: s.dias.map(curta), series, linear: true, title: 'Evolução da captação por dia', height: 440 })}
+      ${line({ labels: s.dias.map(curta), series, linear: true, title: 'Evolução da captação por dia', height: 280 })}
       <p class="k-note">Dia sem nada registrado vale zero, e não some do gráfico. O investimento fica fora
         daqui de propósito: dinheiro e quantidade de lead têm escalas diferentes, e um esconderia o outro.</p>
     </div></section>`;

@@ -55,3 +55,27 @@ test('conteúdo da aba fica dentro do k-scope, que isola o kit dos estilos antig
   assert.ok(html.trimEnd().endsWith('</div>'));
   assert.match(html, /class="k-card-title with-icon"/);
 });
+
+test('engajamento compara cada indicador entre redes sem ocultar valores menores', () => {
+  const html = paginaResultados(conteudos, ui);
+  // YouTube tem 10/15 curtidas, 2/2 comentários e 1/1 compartilhamentos.
+  const youtube = html.split('<section class="k-engagement"><h3>YouTube</h3>')[1].split('</section>')[0];
+  assert.match(youtube, /Curtidas<\/span><b>10<\/b>/);
+  assert.match(youtube, /Comentários<\/span><b>2<\/b>/);
+  assert.equal((youtube.match(/data-w="100.0"/g) || []).length, 3);
+  const facebook = html.split('<section class="k-engagement"><h3>Facebook</h3>')[1].split('</section>')[0];
+  assert.match(facebook, /data-w="50.0"/);
+  assert.equal((facebook.match(/data-w="0.0"/g) || []).length, 2);
+});
+
+test('resultados explicam a série real, escapam títulos e preservam a ação de coleta única', () => {
+  const unsafe = structuredClone(conteudos);
+  unsafe[0].title = '<img src=x onerror=alert(1)>';
+  const html = paginaResultados(unsafe, ui);
+  assert.ok(!html.includes('<img src=x'));
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.equal((html.match(/id="collect"/g) || []).length, 1);
+  assert.match(html, /Não representa as visualizações recebidas no dia/);
+  assert.match(html, /01\/10\/2026/);
+  assert.ok(!/style\s*=/.test(html));
+});
