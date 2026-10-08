@@ -1,7 +1,9 @@
 import express from 'express';
 import multer from 'multer';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStore, NETWORKS } from './lib/store.mjs';
@@ -318,6 +320,15 @@ app.post('/api/networks/:network/test', async (req, res) => {
   } catch (error) { result = { connected: false, account: '', error: 'O n8n não respondeu: ' + error.message }; }
   store.change(d => { d.connections[network] = { ...result, checkedAt: new Date().toISOString() }; });
   res.json(store.db.connections[network]);
+});
+// Abre uma janela do PowerShell na pasta do sistema já rodando o Claude Code (aparece na sessão de quem está logado no Windows).
+app.post('/api/terminal', (req, res) => {
+  const claudeExe = path.join(os.homedir(), '.local', 'bin', 'claude.exe');
+  const claude = fs.existsSync(claudeExe) ? `& '${claudeExe}'` : 'claude';
+  const child = spawn('cmd.exe', [`/c start "Claude - Central NGD" /D "${root}" powershell.exe -NoExit -Command "${claude}"`], { detached: true, stdio: 'ignore', windowsVerbatimArguments: true });
+  child.on('error', () => {});
+  child.unref();
+  res.json({ ok: true });
 });
 app.get('/api/n8n/status', async (req, res) => {
   const base = n8nBase();
