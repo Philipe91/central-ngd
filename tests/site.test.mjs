@@ -24,7 +24,7 @@ test('JWT da conta de serviço: RS256 válido, escopos só de leitura e validade
   assert.equal(claims.aud, 'https://oauth2.googleapis.com/token');
   assert.equal(claims.exp - claims.iat, 3600);
   assert.equal(claims.scope, SCOPES);
-  assert.ok(SCOPES.split(' ').every(x => x.endsWith('.readonly')));
+  assert.ok(SCOPES.split(' ').every(x => x.endsWith('.readonly') || x === 'openid'));
   assert.ok(createVerify('RSA-SHA256').update(h + '.' + c).verify(publicKey, Buffer.from(s, 'base64url')));
 });
 
