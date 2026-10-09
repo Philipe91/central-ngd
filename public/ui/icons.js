@@ -51,6 +51,8 @@ const ICONS = {
   'trophy': [20, '<path d="M6.67 2.5h6.66v5a3.33 3.33 0 0 1-6.66 0v-5ZM6.67 4.17H3.33v1.66a2.5 2.5 0 0 0 2.5 2.5M13.33 4.17h3.34v1.66a2.5 2.5 0 0 1-2.5 2.5M10 10.83v3.34M6.67 17.5h6.66" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
   'pie': [20, '<path d="M10 2.5v7.5h7.5A7.5 7.5 0 1 1 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12.5 2.92a7.5 7.5 0 0 1 4.58 4.58H12.5V2.92Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>'],
   'caret': [10,'<path d="M2 3.5h6L5 7Z" fill="currentColor"/>'],
+  'globe': [20, '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10h15M10 2.5c2 2.1 3 4.6 3 7.5s-1 5.4-3 7.5c-2-2.1-3-4.6-3-7.5s1-5.4 3-7.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
+  'gauge': [20, '<path d="M3.33 14.17a7.5 7.5 0 1 1 13.34 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 11.67 3.33-4.17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="11.67" r="1.04" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'],
 };
 
 export const ICON_NAMES = Object.keys(ICONS);

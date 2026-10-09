@@ -12,6 +12,8 @@ import { AUTOMATED, claimJobs, applyResult, applyMetrics, jobsSnapshot, expireSt
 import * as media from './lib/media.mjs';
 import { createTikTokAuth } from './lib/tiktok-auth.mjs';
 import { criarRotasAds } from './lib/ads/routes.mjs';
+import { createSiteMonitor } from './lib/site/collect.mjs';
+import { dadosExemplo } from './lib/site/exemplo.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = process.env.NGD_DATA_DIR || path.join(root, 'data');
@@ -31,6 +33,8 @@ function bridgeSecret() { return secrets().bridgeToken || null; }
 function shareSecret() { return secrets().shareSecret || secrets().bridgeToken || null; }
 // TikTok: o painel guarda e renova o token (data/automation-secrets.json) e o entrega ao n8n em cada trabalho dessa rede.
 const tiktokAuth = createTikTokAuth({ file: path.join(dataDir, 'automation-secrets.json'), log: message => { try { store.change(d => store.log(d, message)); } catch {} } });
+// Site oficial: só lê APIs do Google com o robô de leitura (data/google-site-leitura.json). Ver lib/site/collect.mjs.
+const site = createSiteMonitor({ dataDir, log: message => { try { store.change(d => store.log(d, message)); } catch {} } });
 function n8nBase() { return store.db.settings.n8nUrl.replace('localhost', '127.0.0.1'); }
 async function n8nWebhook(name, body, timeout = 15000) {
   const token = bridgeSecret();
@@ -340,6 +344,10 @@ app.get('/api/n8n/status', async (req, res) => {
   const jobs = jobsSnapshot(store.db).filter(j => j.scheduledAt);
   res.json({ online, connected, mode: store.db.automation?.mode || 'idle', lastCheck: store.db.automation?.checkedAt || null, jobs, tunnel: media.tunnelStatus() });
 });
+// Aba Site: sem dados reais ainda, devolve o exemplo marcado (exemplo: true).
+app.get('/api/site', (req, res) => { res.setHeader('Cache-Control', 'no-store'); const s = site.status(); res.json({ ...s, dados: s.dados || dadosExemplo() }); });
+app.post('/api/site/coletar', async (req, res) => { const dados = await site.coletar({ manual: true }); res.json({ ...site.status(), dados }); });
+app.post('/api/site/config', (req, res) => { res.json(site.salvarConfig({ propertyId: req.body?.propertyId })); });
 app.get('/api/export', (req, res) => { res.attachment('ngd-planejamento.json').json(store.db); });
 // Mídia Paga: módulo separado, com banco próprio (data/ads.sqlite). Não usa o dashboard.json.
 const adsRouter = criarRotasAds(dataDir);
@@ -379,6 +387,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   app.listen(port, '127.0.0.1', () => console.log(`NGD Mídia: http://localhost:${port}`));
   shareApp.listen(SHARE_PORT, '127.0.0.1', () => console.log(`Compartilhamento temporário: 127.0.0.1:${SHARE_PORT}`));
   setTimeout(prepareMissing, 1500);
+  site.agendar();
   setInterval(() => { try { store.change(d => expireStuck(d)); } catch {} }, 5 * 60 * 1000);
   process.on('exit', media.stopTunnel);
 }
