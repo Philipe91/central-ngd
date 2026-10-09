@@ -103,8 +103,13 @@ export function htmlSite(resp, ui = {}) {
     <div class="r-card-body">${ga4 ? hbars((ga4.canais || []).map(c => ({ label: c.nome, value: c.sessoes }))) + `<h3 class="s-sub">Principais origens</h3>` + hbars((ga4.origens || []).slice(0, 6).map((c, i) => ({ label: c.nome, value: c.sessoes, color: [KIT.accent, KIT.green, KIT.purple, KIT.yellow, KIT.red, KIT.ink][i] }))) + '<p class="k-note">"instagram" e "l.instagram.com" são cliques vindos do Instagram (perfil, stories e anúncios).</p>' : vazio('Sem visitas ainda', 'Aguardando o Google Analytics.')}</div></section>`;
   const paginasGa = `<section class="k-card r-card">${cabeca('Páginas mais vistas', `<span class="r-ic yellow">${icon('eye', { size: 20 })}</span>`, 'Google Analytics, últimos 28 dias')}
     ${tabela(['Página', 'Visualizações', 'Visitantes'], (ga4?.paginas || []).map(p => `<tr><td class="s-q">${esc(p.pagina)}</td><td class="t-right k-num"><strong>${fmt(p.views)}</strong></td><td class="t-right k-num">${fmt(p.users)}</td></tr>`), 'O Analytics ainda não informou páginas.')}</section>`;
-  const whatsapp = `<section class="k-card r-card s-breve">${cabeca('Cliques no WhatsApp', `<span class="r-ic blue">${icon('chat', { size: 20 })}</span>`, 'Em breve')}
-    <div class="r-card-body"><p>Quantas pessoas chamaram no WhatsApp a partir de cada página do site, por dia. Vai usar um total agregado só de leitura, sem dados de quem clicou.</p></div></section>`;
+  // Cliques no WhatsApp (evento clique_whatsapp do GA4). "Pessoas" conta cada visitante uma vez; "cliques" soma repetições.
+  const zap = ga4?.whatsapp;
+  const whatsapp = `<section class="k-card r-card s-zap">${cabeca('Cliques no WhatsApp', `<span class="r-ic green">${icon('chat', { size: 20 })}</span>`, 'Quem chamou no WhatsApp pelo site, últimos 28 dias')}
+    ${zap ? `<div class="r-card-body"><p class="s-zap-total"><strong class="k-num">${fmt(zap.atual.pessoas)}</strong> pessoas chamaram ${selo(variacao(zap.atual.pessoas, zap.anterior.pessoas))}<small>${fmt(zap.atual.cliques)} cliques no total · ${fmt(zap.anterior.pessoas)} pessoas nos 28 dias anteriores</small></p>
+    <h3 class="s-sub">Por canal</h3>${hbars((zap.canais || []).map(c => ({ label: c.nome, value: c.pessoas })))}</div>
+    ${tabela(['Página', 'Pessoas', 'Cliques'], (zap.paginas || []).map(p => `<tr><td class="s-q">${esc(p.pagina)}</td><td class="t-right k-num"><strong>${fmt(p.pessoas)}</strong></td><td class="t-right k-num">${fmt(p.cliques)}</td></tr>`), 'Nenhum clique no WhatsApp no período.')}
+    <p class="k-note k-pad">Vem do evento "clique_whatsapp" que o site já envia ao Analytics. Muitos cliques por pessoa numa página podem ser cliques repetidos ou disparos duplicados.</p>` : vazio('Sem cliques ainda', 'Aguardando o Google Analytics.')}</section>`;
 
   return `<div class="k-scope r-page s-page">${head}${faixaExemplo}${config}${avisos}${kpis}
     <div class="r-grid">${evolucao}${velocidade}${buscas}${canais}${paginasGsc}${indexacao}${paginasGa}${whatsapp}</div></div>`;

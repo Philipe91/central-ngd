@@ -177,7 +177,7 @@ test('página em modo exemplo: faixa de aviso, cartão de configuração e todas
   assert.match(html, /data\/google-site-leitura\.json/);
   assert.match(html, /id="site-config"/);
   assert.match(html, /id="site-coletar"[^>]*disabled/);
-  for (const t of ['Cliques vindos do Google', 'Velocidade', 'Buscas que trazem gente', 'De onde vêm as visitas', 'O Google está reconhecendo o site?', 'Páginas mais vistas', 'Cliques no WhatsApp']) assert.ok(html.includes(t), t);
+  for (const t of ['Cliques vindos do Google', 'Velocidade', 'Buscas que trazem gente', 'De onde vêm as visitas', 'O Google está reconhecendo o site?', 'Páginas mais vistas', 'Cliques no WhatsApp', 'pessoas chamaram']) assert.ok(html.includes(t), t);
   assert.ok(!/ style="/.test(html), 'sem style inline (CSP)');
   assert.match(html, /s-nota media"><b class="k-num">58/);
 });
